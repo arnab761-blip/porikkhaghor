@@ -511,6 +511,8 @@ export default function CreateExam() {
         createdAt: serverTimestamp(),
         questions: questions 
       });
+      sessionStorage.removeItem('porikkhaghor_cached_exams');
+      sessionStorage.removeItem('porikkhaghor_cached_exams_time');
       alert('পরীক্ষা সফলভাবে তৈরি হয়েছে!');
       navigate('/dashboard');
     } catch (error) {

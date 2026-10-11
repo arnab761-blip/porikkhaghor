@@ -19,7 +19,8 @@ import {
   Folder as FolderIcon,
   Layers,
   ChevronRight,
-  Award
+  Award,
+  RotateCcw
 } from 'lucide-react';
 import PaymentModal from '../components/PaymentModal';
 
@@ -49,9 +50,34 @@ export default function ExamList() {
 
   // Telegram / Community Link
   const [telegramLink, setTelegramLink] = useState('https://t.me/porikkhaghor');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchExams = async () => {
+  const CACHE_KEY = 'porikkhaghor_cached_exams';
+  const CACHE_TIME_KEY = 'porikkhaghor_cached_exams_time';
+  const CACHE_TTL = 3 * 60 * 1000; // 3 minutes cache to drastically cut down Firestore reads
+
+  const fetchExams = async (forceRefresh = false) => {
     try {
+      if (forceRefresh) {
+        setIsRefreshing(true);
+      } else {
+        // Check cache first
+        const cached = sessionStorage.getItem(CACHE_KEY);
+        const cachedTime = sessionStorage.getItem(CACHE_TIME_KEY);
+        if (cached && cachedTime && (Date.now() - Number(cachedTime) < CACHE_TTL)) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setExams(parsed);
+              setLoading(false);
+              return;
+            }
+          } catch (e) {
+            // ignore cache parse error
+          }
+        }
+      }
+
       const q = query(collection(db, 'exams'), orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
       const fetchedExams = querySnapshot.docs.map(d => ({
@@ -59,6 +85,8 @@ export default function ExamList() {
         ...d.data()
       })) as Exam[];
       setExams(fetchedExams);
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(fetchedExams));
+      sessionStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
 
       // Fetch Telegram link from settings if exists
       const settingsSnap = await getDoc(doc(db, 'settings', 'adminProfile'));
@@ -69,6 +97,7 @@ export default function ExamList() {
       console.error("Error fetching exams:", error);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -85,7 +114,9 @@ export default function ExamList() {
     
     try {
       await deleteDoc(doc(db, 'exams', id));
-      fetchExams();
+      sessionStorage.removeItem(CACHE_KEY);
+      sessionStorage.removeItem(CACHE_TIME_KEY);
+      fetchExams(true);
       alert('পরীক্ষা ডিলিট করা হয়েছে!');
     } catch (error) {
       console.error(error);
@@ -276,6 +307,15 @@ export default function ExamList() {
               সকল পরীক্ষা
             </button>
           </div>
+
+          <button
+            onClick={() => fetchExams(true)}
+            disabled={isRefreshing}
+            title="নতুন কোনো পরীক্ষা যোগ হলে রিফ্রেশ করুন"
+            className="p-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-500 hover:text-primary-light dark:hover:text-primary-dark transition-all hover:bg-gray-50 dark:hover:bg-gray-800 shrink-0 flex items-center justify-center disabled:opacity-50"
+          >
+            <RotateCcw size={16} className={isRefreshing ? 'animate-spin text-primary-light' : ''} />
+          </button>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { XCircle, BookOpen, ChevronRight } from 'lucide-react';
@@ -42,10 +42,14 @@ export default function MistakeBank() {
           // Only fetch the exam document if they made mistakes
           if (res.stats && res.stats.wrong > 0) {
             if (!examCache[examId]) {
-              // Note: Using getDocs and caching manually to prevent too many reads
-              const qExam = query(collection(db, 'exams'));
-              const examDocs = await getDocs(qExam);
-              examDocs.forEach(e => { examCache[e.id] = e.data(); });
+              try {
+                const examSnap = await getDoc(doc(db, 'exams', examId));
+                if (examSnap.exists()) {
+                  examCache[examId] = examSnap.data();
+                }
+              } catch (e) {
+                console.error("Error fetching exam for mistake:", e);
+              }
             }
 
             const examData = examCache[examId];
