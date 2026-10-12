@@ -1,10 +1,23 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { collection, addDoc, getDocs, query, orderBy, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, getDocs, query, orderBy, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { Package, Plus, Trash2, CheckCircle2, DollarSign, ListChecks, Sparkles } from 'lucide-react';
+import { 
+  Package, 
+  Plus, 
+  Trash2, 
+  CheckCircle2, 
+  DollarSign, 
+  ListChecks, 
+  Sparkles, 
+  Image as ImageIcon, 
+  Edit3, 
+  X, 
+  Eye 
+} from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import { formatImageUrl } from '../lib/imageUtils';
 
 interface CoursePackage {
   id: string;
@@ -12,6 +25,7 @@ interface CoursePackage {
   description: string;
   price: number;
   features: string[];
+  imageUrl?: string;
 }
 
 export default function ManagePackages() {
@@ -19,8 +33,10 @@ export default function ManagePackages() {
   const navigate = useNavigate();
 
   const [packages, setPackages] = useState<CoursePackage[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [price, setPrice] = useState<number | ''>('');
   const [currentFeature, setCurrentFeature] = useState('');
   const [features, setFeatures] = useState<string[]>([
@@ -53,6 +69,33 @@ export default function ManagePackages() {
     }
   };
 
+  const handleStartEdit = (pkg: CoursePackage) => {
+    setEditingId(pkg.id);
+    setTitle(pkg.title);
+    setDescription(pkg.description || '');
+    setPrice(pkg.price);
+    setImageUrl(pkg.imageUrl || '');
+    setFeatures(pkg.features || [
+      'অধ্যায়ভিত্তিক ও পূর্ণাঙ্গ মডেল টেস্ট',
+      'প্রতিটি প্রশ্নের বিস্তারিত সমাধান ও ব্যাখ্যা',
+      'ভুল উত্তরের ডায়েরি ও রিভিশন সুবিধা'
+    ]);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setTitle('');
+    setDescription('');
+    setImageUrl('');
+    setPrice('');
+    setFeatures([
+      'অধ্যায়ভিত্তিক ও পূর্ণাঙ্গ মডেল টেস্ট',
+      'প্রতিটি প্রশ্নের বিস্তারিত সমাধান ও ব্যাখ্যা',
+      'ভুল উত্তরের ডায়েরি ও রিভিশন সুবিধা'
+    ]);
+  };
+
   const handleAddFeature = () => {
     if (!currentFeature.trim()) return;
     setFeatures([...features, currentFeature.trim()]);
@@ -78,24 +121,26 @@ export default function ManagePackages() {
 
     try {
       setIsSaving(true);
-      await addDoc(collection(db, 'packages'), {
+      const pkgData: any = {
         title: title.trim(),
         description: description.trim(),
         price: Number(price) || 0,
+        imageUrl: imageUrl.trim(),
         features,
-        createdAt: serverTimestamp()
-      });
+      };
 
-      setTitle('');
-      setDescription('');
-      setPrice('');
-      setFeatures([
-        'অধ্যায়ভিত্তিক ও পূর্ণাঙ্গ মডেল টেস্ট',
-        'প্রতিটি প্রশ্নের বিস্তারিত সমাধান ও ব্যাখ্যা',
-        'ভুল উত্তরের ডায়েরি ও রিভিশন সুবিধা'
-      ]);
+      if (editingId) {
+        pkgData.updatedAt = serverTimestamp();
+        await updateDoc(doc(db, 'packages', editingId), pkgData);
+        alert('প্যাকেজটি সফলভাবে আপডেট ও ছবি সংরক্ষণ করা হয়েছে!');
+      } else {
+        pkgData.createdAt = serverTimestamp();
+        await addDoc(collection(db, 'packages'), pkgData);
+        alert('প্যাকেজ সফলভাবে তৈরি হয়েছে! শিক্ষার্থীরা এখন প্যাকেজ পেজে এটি দেখতে পাবে।');
+      }
+
+      handleCancelEdit();
       fetchPackages();
-      alert('প্যাকেজ সফলভাবে তৈরি হয়েছে! শিক্ষার্থীরা এখন প্যাকেজ পেজে এটি দেখতে পাবে।');
     } catch (error) {
       console.error(error);
       alert('প্যাকেজ সেভ করতে সমস্যা হয়েছে।');
@@ -108,6 +153,9 @@ export default function ManagePackages() {
     if (!window.confirm(`আপনি কি নিশ্চিত যে "${pkgTitle}" প্যাকেজটি ডিলিট করতে চান?`)) return;
     try {
       await deleteDoc(doc(db, 'packages', id));
+      if (editingId === id) {
+        handleCancelEdit();
+      }
       fetchPackages();
     } catch (error) {
       console.error(error);
@@ -121,6 +169,9 @@ export default function ManagePackages() {
   };
 
   const sampleSuggestions = [
+    'অধ্যায়ভিত্তিক ও পূর্ণাঙ্গ মডেল টেস্ট',
+    'প্রতিটি প্রশ্নের বিস্তারিত সমাধান ও ব্যাখ্যা',
+    'ভুল উত্তরের ডায়েরি ও রিভিশন সুবিধা',
     'লাইভ মেধা তালিকা ও র‍্যাঙ্কিং',
     'পিডিএফ লেকচার শিট ও রিসোর্স',
     'আনলিমিটেড প্র্যাকটিস টেস্ট',
@@ -137,22 +188,45 @@ export default function ManagePackages() {
             প্যাকেজ ও কোর্স ম্যানেজমেন্ট
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            শিক্ষার্থীদের জন্য পেইড প্যাকেজ বা মডেল টেস্ট ব্যাচ তৈরি ও পরিচালনা করুন।
+            শিক্ষার্থীদের জন্য পেইড প্যাকেজ বা মডেল টেস্ট ব্যাচ তৈরি, ছবি যোগ ও পরিচালনা করুন।
           </p>
         </div>
         <Link
-          to="/courses"
+          to="/packages"
           className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors font-medium self-start sm:self-auto"
         >
-          👁️ শিক্ষার্থীদের ভিউ দেখুন
+          <Eye size={16} /> শিক্ষার্থীদের প্যাকেজ পেজ দেখুন
         </Link>
       </div>
 
-      {/* CREATE PACKAGE FORM */}
-      <div className="bg-white dark:bg-gray-900 p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800 mb-10">
-        <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center gap-2">
-          <Plus className="text-primary-light" size={22} /> নতুন প্যাকেজ তৈরি করুন
-        </h2>
+      {/* CREATE / EDIT PACKAGE FORM */}
+      <div className={`bg-white dark:bg-gray-900 p-6 md:p-8 rounded-3xl shadow-sm border ${
+        editingId ? 'border-amber-400 ring-2 ring-amber-400/20' : 'border-gray-200 dark:border-gray-800'
+      } mb-10 transition-all`}>
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            {editingId ? (
+              <>
+                <Edit3 className="text-amber-500" size={22} /> 
+                প্যাকেজ সম্পাদনা ও ছবি পরিবর্তন করুন
+              </>
+            ) : (
+              <>
+                <Plus className="text-primary-light dark:text-primary-dark" size={22} /> 
+                নতুন প্যাকেজ তৈরি করুন
+              </>
+            )}
+          </h2>
+          {editingId && (
+            <button
+              type="button"
+              onClick={handleCancelEdit}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-1 transition-colors"
+            >
+              <X size={14} /> এডিট বাতিল
+            </button>
+          )}
+        </div>
 
         <form onSubmit={handleSave} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -162,8 +236,8 @@ export default function ManagePackages() {
                 type="text"
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                placeholder="যেমন: মেডিকেল স্পেশাল মডেল টেস্ট ব্যাচ"
-                className="w-full p-3 border rounded-xl dark:bg-gray-800 dark:border-gray-700 focus:ring-2 focus:ring-primary-light"
+                placeholder="যেমন: textile engineering special"
+                className="w-full p-3 border rounded-xl dark:bg-gray-800 dark:border-gray-700 focus:ring-2 focus:ring-primary-light text-sm"
                 required
               />
             </div>
@@ -176,9 +250,9 @@ export default function ManagePackages() {
                 type="number"
                 value={price}
                 onChange={e => setPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                placeholder="যেমন: 500"
+                placeholder="যেমন: 199"
                 min="0"
-                className="w-full p-3 border rounded-xl dark:bg-gray-800 dark:border-gray-700 focus:ring-2 focus:ring-primary-light"
+                className="w-full p-3 border rounded-xl dark:bg-gray-800 dark:border-gray-700 focus:ring-2 focus:ring-primary-light text-sm"
                 required
               />
             </div>
@@ -191,8 +265,62 @@ export default function ManagePackages() {
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="প্যাকেজটি কাদের জন্য বা কী কী অন্তর্ভুক্ত রয়েছে তার সংক্ষিপ্ত বিবরণ দিন..."
-              className="w-full p-3 border rounded-xl dark:bg-gray-800 dark:border-gray-700 focus:ring-2 focus:ring-primary-light"
+              className="w-full p-3 border rounded-xl dark:bg-gray-800 dark:border-gray-700 focus:ring-2 focus:ring-primary-light text-sm"
             />
+          </div>
+
+          {/* PACKAGE IMAGE URL INPUT WITH LIVE PREVIEW */}
+          <div className="bg-primary-light/5 dark:bg-primary-dark/5 p-4 rounded-2xl border border-primary-light/10">
+            <label className="block text-sm font-semibold mb-1.5 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-gray-900 dark:text-white">
+                <ImageIcon size={18} className="text-primary-light dark:text-primary-dark" /> 
+                প্যাকেজের আকর্ষণীয় কভার বা ব্যানার ছবি (ঐচ্ছিক)
+              </span>
+              <span className="text-xs text-primary-light dark:text-primary-dark font-normal">
+                Google Drive, Cloudinary বা সরাসরি লিংক
+              </span>
+            </label>
+            <input
+              type="url"
+              value={imageUrl}
+              onChange={e => setImageUrl(e.target.value)}
+              placeholder="যেমন: https://drive.google.com/file/d/1A2B... অথবা https://res.cloudinary.com/..."
+              className="w-full p-3 border rounded-xl dark:bg-gray-800 dark:border-gray-700 focus:ring-2 focus:ring-primary-light text-sm bg-white"
+            />
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-2 flex items-start gap-1">
+              <Sparkles size={14} className="text-amber-500 shrink-0 mt-0.5" />
+              <span>
+                <strong>ড্রাইভ লিংক টিপস:</strong> গুগল ড্রাইভে ছবির উপর রাইট ক্লিক করে <em>Share &gt; Anyone with the link</em> সিলেক্ট করে লিংক কপি করে এখানে পেস্ট করুন। স্বয়ংক্রিয়ভাবে সরাসরি কার্ডের উপরে ছবি লোড হবে।
+              </span>
+            </p>
+
+            {/* Live Image Preview */}
+            {imageUrl.trim() && (
+              <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-2 flex items-center gap-1.5">
+                  <ImageIcon size={14} className="text-green-600" /> ছবির প্রিভিউ (Live Preview):
+                </span>
+                <div className="relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 h-44 sm:h-52 w-full flex items-center justify-center border border-gray-200 dark:border-gray-700 shadow-inner">
+                  <img
+                    src={formatImageUrl(imageUrl)}
+                    alt="ব্যানার প্রিভিউ"
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent && !parent.querySelector('.img-preview-error')) {
+                        const err = document.createElement('div');
+                        err.className = 'img-preview-error text-xs text-red-500 p-4 text-center font-medium';
+                        err.innerText = '⚠️ ছবিটি লোড হতে পারছে না। গুগল ড্রাইভের লিংক হলে ফাইলটি "Anyone with the link can view" পারমিশন দেওয়া আছে কিনা চেক করুন।';
+                        parent.appendChild(err);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Features Builder */}
@@ -267,14 +395,25 @@ export default function ManagePackages() {
             </div>
           </div>
 
-          <div className="text-right pt-2">
+          <div className="flex items-center justify-end gap-3 pt-2">
+            {editingId && (
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="px-5 py-3 rounded-xl border border-gray-300 dark:border-gray-700 font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                বাতিল করুন
+              </button>
+            )}
             <button
               type="submit"
               disabled={isSaving}
-              className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-colors disabled:opacity-50 flex items-center gap-2 ml-auto shadow-md"
+              className={`px-6 py-3 ${
+                editingId ? 'bg-amber-500 hover:bg-amber-600' : 'bg-green-600 hover:bg-green-700'
+              } text-white rounded-xl font-bold transition-colors disabled:opacity-50 flex items-center gap-2 shadow-md`}
             >
               <Package size={20} />
-              {isSaving ? 'সংরক্ষণ হচ্ছে...' : 'প্যাকেজটি প্রকাশ করুন'}
+              {isSaving ? 'সংরক্ষণ হচ্ছে...' : editingId ? 'আপডেট সংরক্ষণ করুন' : 'প্যাকেজটি প্রকাশ করুন'}
             </button>
           </div>
         </form>
@@ -298,42 +437,86 @@ export default function ManagePackages() {
             {packages.map(pkg => (
               <div
                 key={pkg.id}
-                className="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col justify-between"
+                className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col justify-between group"
               >
                 <div>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="font-bold text-xl text-gray-900 dark:text-white">{pkg.title}</h3>
-                    <button
-                      onClick={() => handleDelete(pkg.id, pkg.title)}
-                      className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                      title="প্যাকেজটি মুছে ফেলুন"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-
-                  {pkg.description && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{pkg.description}</p>
+                  {/* Card Header Image / Placeholder */}
+                  {pkg.imageUrl ? (
+                    <div className="relative w-full h-44 overflow-hidden bg-gray-100 dark:bg-gray-800">
+                      <img
+                        src={formatImageUrl(pkg.imageUrl)}
+                        alt={pkg.title}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-semibold text-white flex items-center gap-1">
+                        <ImageIcon size={12} className="text-green-400" /> কভার ছবি যুক্ত
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative w-full h-28 bg-gradient-to-br from-primary-light/90 to-primary-dark p-4 flex items-center justify-between overflow-hidden">
+                      <span className="text-xs font-semibold text-white/90 bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <Sparkles size={12} className="text-amber-300" /> ছবি নেই (ডিফল্ট ব্যানার)
+                      </span>
+                      <Package size={40} className="text-white/20 absolute -right-1 -bottom-1 rotate-12" />
+                    </div>
                   )}
 
-                  <div className="mb-4">
-                    <span className="text-3xl font-black text-primary-light dark:text-primary-dark">
-                      ৳{toBengaliNumber(pkg.price)}
-                    </span>
-                  </div>
+                  <div className="p-6 pb-2">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <h3 className="font-bold text-lg text-gray-900 dark:text-white line-clamp-1">{pkg.title}</h3>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => handleStartEdit(pkg)}
+                          className="text-gray-400 hover:text-blue-600 p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+                          title="প্যাকেজ সম্পাদনা ও ছবি পরিবর্তন করুন"
+                        >
+                          <Edit3 size={17} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(pkg.id, pkg.title)}
+                          className="text-gray-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                          title="প্যাকেজটি মুছে ফেলুন"
+                        >
+                          <Trash2 size={17} />
+                        </button>
+                      </div>
+                    </div>
 
-                  <ul className="space-y-2 mb-4 border-t border-gray-100 dark:border-gray-800 pt-3">
-                    {pkg.features?.map((feat, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
-                        <CheckCircle2 size={15} className="text-green-500 shrink-0 mt-0.5" />
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
+                    {pkg.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{pkg.description}</p>
+                    )}
+
+                    <div className="mb-4">
+                      <span className="text-3xl font-black text-primary-light dark:text-primary-dark">
+                        ৳{toBengaliNumber(pkg.price)}
+                      </span>
+                    </div>
+
+                    <ul className="space-y-2 mb-4 border-t border-gray-100 dark:border-gray-800 pt-3">
+                      {pkg.features?.map((feat, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-300">
+                          <CheckCircle2 size={14} className="text-green-500 shrink-0 mt-0.5" />
+                          <span className="line-clamp-1">{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
 
-                <div className="pt-2 border-t border-gray-100 dark:border-gray-800 text-xs text-green-600 font-semibold flex items-center gap-1">
-                  <CheckCircle2 size={14} /> স্টুডেন্টদের কাছে লাইভ প্রদর্শিত হচ্ছে
+                <div className="p-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs">
+                  <span className="text-green-600 font-semibold flex items-center gap-1">
+                    <CheckCircle2 size={14} /> লাইভ প্রকাশিত
+                  </span>
+                  <button
+                    onClick={() => handleStartEdit(pkg)}
+                    className="text-primary-light dark:text-primary-dark hover:underline font-bold flex items-center gap-1"
+                  >
+                    <Edit3 size={13} /> ছবি/তথ্য এডিট
+                  </button>
                 </div>
               </div>
             ))}
