@@ -55,10 +55,10 @@ export default function Leaderboard() {
         const q = query(collection(db, 'results'), where('examId', '==', examId));
         const snap = await getDocs(q);
 
-        const fetchedList: ResultEntry[] = [];
+        const rawList: ResultEntry[] = [];
         snap.forEach(docSnap => {
           const data = docSnap.data();
-          fetchedList.push({
+          rawList.push({
             id: docSnap.id,
             userId: data.userId || '',
             userName: data.userName || 'শিক্ষার্থী',
@@ -68,8 +68,29 @@ export default function Leaderboard() {
           });
         });
 
-        // 3. Sort by totalScore desc, then correct desc, then wrong asc, then submittedAt asc
-        fetchedList.sort((a, b) => {
+        // 3. Sort chronologically (oldest first) to identify the first attempt
+        rawList.sort((a, b) => {
+          const timeA = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : (a.submittedAt ? new Date(a.submittedAt).getTime() : 0);
+          const timeB = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : (b.submittedAt ? new Date(b.submittedAt).getTime() : 0);
+          return timeA - timeB;
+        });
+
+        // 4. Keep ONLY the FIRST attempt for each unique student (retakes are ignored)
+        const firstAttemptsMap = new Map<string, ResultEntry>();
+        for (const entry of rawList) {
+          const studentKey = (entry.userId && entry.userId !== 'guest')
+            ? entry.userId
+            : (entry.userEmail ? entry.userEmail.trim().toLowerCase() : entry.userName.trim().toLowerCase());
+
+          if (!firstAttemptsMap.has(studentKey)) {
+            firstAttemptsMap.set(studentKey, entry);
+          }
+        }
+
+        const uniqueFirstAttempts = Array.from(firstAttemptsMap.values());
+
+        // 5. Sort unique 1st attempts by merit (score desc, correct desc, wrong asc, time asc)
+        uniqueFirstAttempts.sort((a, b) => {
           const scoreA = Number(a.stats?.totalScore) || 0;
           const scoreB = Number(b.stats?.totalScore) || 0;
           if (scoreB !== scoreA) return scoreB - scoreA;
@@ -87,7 +108,7 @@ export default function Leaderboard() {
           return timeA - timeB;
         });
 
-        setResults(fetchedList);
+        setResults(uniqueFirstAttempts);
       } catch (error) {
         console.error("Error fetching leaderboard:", error);
       } finally {
@@ -160,7 +181,7 @@ export default function Leaderboard() {
             {examTitle || 'পরীক্ষার ফলাফল ও মেধা তালিকা'}
           </h1>
           <p className="text-white/80 text-sm">
-            এই পরীক্ষায় অংশগ্রহণকারী সকল শিক্ষার্থীর প্রাপ্ত নম্বরের ভিত্তিতে স্বয়ংক্রিয়ভাবে সাজানো মেধা তালিকা।
+            প্রতিটি শিক্ষার্থীর শুধুমাত্র প্রথম পরীক্ষার ফলাফল (First Attempt) নিয়ে তৈরি অফিসিয়াল মেধা তালিকা। পুনরায় দেওয়া পরীক্ষা (Retake) মেধা তালিকায় যুক্ত হবে না।
           </p>
         </div>
       </div>

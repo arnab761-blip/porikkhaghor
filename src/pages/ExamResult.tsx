@@ -40,20 +40,60 @@ export default function ExamResult() {
           setExamData(examSnap.data());
         }
 
-        // 3. Calculate rank
+        // 3. Calculate rank (Only 1st Attempt counts for official ranking)
         try {
           const q = query(collection(db, 'results'), where('examId', '==', resData.examId));
           const examResultsSnap = await getDocs(q);
-          const allScores = examResultsSnap.docs.map(d => ({
+          const rawSubmissions = examResultsSnap.docs.map(d => ({
             id: d.id,
+            userId: d.data().userId || '',
+            userEmail: d.data().userEmail || '',
+            userName: d.data().userName || '',
             score: Number(d.data().stats?.totalScore) || 0,
             correct: Number(d.data().stats?.correct) || 0,
+            wrong: Number(d.data().stats?.wrong) || 0,
             time: d.data().submittedAt?.toMillis ? d.data().submittedAt.toMillis() : 0
           }));
-          allScores.sort((a, b) => b.score - a.score || b.correct - a.correct || a.time - b.time);
-          const rIndex = allScores.findIndex(s => s.id === resultId);
+
+          // Sort chronologically (oldest first)
+          rawSubmissions.sort((a, b) => a.time - b.time);
+
+          // Deduplicate to keep only 1st attempt per unique student
+          const firstAttemptsMap = new Map<string, typeof rawSubmissions[0]>();
+          for (const sub of rawSubmissions) {
+            const key = (sub.userId && sub.userId !== 'guest')
+              ? sub.userId
+              : (sub.userEmail ? sub.userEmail.trim().toLowerCase() : sub.userName.trim().toLowerCase());
+
+            if (!firstAttemptsMap.has(key)) {
+              firstAttemptsMap.set(key, sub);
+            }
+          }
+
+          const uniqueList = Array.from(firstAttemptsMap.values());
+
+          // Sort unique 1st attempts by merit
+          uniqueList.sort((a, b) => b.score - a.score || b.correct - a.correct || a.wrong - b.wrong || a.time - b.time);
+
+          const currentStudentKey = (resData.userId && resData.userId !== 'guest')
+            ? resData.userId
+            : (resData.userEmail ? resData.userEmail.trim().toLowerCase() : resData.userName?.trim().toLowerCase());
+
+          const rIndex = uniqueList.findIndex(s => {
+            const k = (s.userId && s.userId !== 'guest')
+              ? s.userId
+              : (s.userEmail ? s.userEmail.trim().toLowerCase() : s.userName.trim().toLowerCase());
+            return k === currentStudentKey;
+          });
+
           if (rIndex !== -1) {
-            setRankInfo({ rank: rIndex + 1, total: allScores.length });
+            const firstSub = uniqueList[rIndex];
+            const isRetake = firstSub.id !== resultId;
+            setRankInfo({ 
+              rank: rIndex + 1, 
+              total: uniqueList.length,
+              isRetake: isRetake 
+            } as any);
           }
         } catch (rErr) {
           console.error("Rank calculation error:", rErr);
@@ -128,6 +168,11 @@ export default function ExamResult() {
               {rankInfo ? `${toBengaliNumber(rankInfo.rank)} নম্বর স্থান` : 'গণনা হচ্ছে...'}
               {rankInfo && <span className="text-sm font-normal text-amber-100 ml-2">(মোট {toBengaliNumber(rankInfo.total)} জনের মধ্যে)</span>}
             </div>
+            {(rankInfo as any)?.isRetake && (
+              <p className="text-xs text-amber-100/90 mt-1 font-medium">
+                💡 এটি আপনার অনুশীলনমূলক রি-টেক পরীক্ষা। অফিসিয়াল মেধা তালিকায় ১ম পরীক্ষার ফলাফল বহাল রয়েছে।
+              </p>
+            )}
           </div>
         </div>
 

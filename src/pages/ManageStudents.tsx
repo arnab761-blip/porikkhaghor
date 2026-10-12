@@ -55,6 +55,7 @@ export default function ManageStudents() {
   const [examSubmissions, setExamSubmissions] = useState<any[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
   const [submissionSearch, setSubmissionSearch] = useState('');
+  const [filterFirstAttemptOnly, setFilterFirstAttemptOnly] = useState(true);
 
   // Fetch all exams for dropdown
   useEffect(() => {
@@ -87,13 +88,31 @@ export default function ManageStudents() {
         setLoadingSubmissions(true);
         const q = query(collection(db, 'results'), where('examId', '==', selectedExamId));
         const snap = await getDocs(q);
-        const list: any[] = [];
+        const rawList: any[] = [];
         snap.forEach(d => {
-          list.push({ id: d.id, ...d.data() });
+          rawList.push({ id: d.id, ...d.data() });
         });
 
-        // Sort by totalScore desc, then correct desc, then time asc
-        list.sort((a, b) => {
+        // 1. Sort chronologically (oldest first) to accurately identify 1st attempt
+        rawList.sort((a, b) => {
+          const timeA = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0;
+          const timeB = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0;
+          return timeA - timeB;
+        });
+
+        // 2. Identify 1st attempt vs retakes
+        const seenStudents = new Set<string>();
+        const taggedList = rawList.map(item => {
+          const key = (item.userId && item.userId !== 'guest')
+            ? item.userId
+            : (item.userEmail ? item.userEmail.trim().toLowerCase() : item.userName?.trim().toLowerCase());
+          const isFirst = !seenStudents.has(key);
+          seenStudents.add(key);
+          return { ...item, isFirstAttempt: isFirst };
+        });
+
+        // 3. Sort by merit (score desc, correct desc, time asc)
+        taggedList.sort((a, b) => {
           const scoreA = Number(a.stats?.totalScore) || 0;
           const scoreB = Number(b.stats?.totalScore) || 0;
           if (scoreB !== scoreA) return scoreB - scoreA;
@@ -107,7 +126,7 @@ export default function ManageStudents() {
           return timeA - timeB;
         });
 
-        setExamSubmissions(list);
+        setExamSubmissions(taggedList);
       } catch (e) {
         console.error("Error fetching exam submissions:", e);
       } finally {
@@ -223,6 +242,7 @@ export default function ManageStudents() {
 
   // Filtered submissions in Tab 2
   const filteredSubmissions = examSubmissions.filter(sub => {
+    if (filterFirstAttemptOnly && !sub.isFirstAttempt) return false;
     if (!submissionSearch.trim()) return true;
     const q = submissionSearch.toLowerCase();
     return (sub.userName && sub.userName.toLowerCase().includes(q)) ||
@@ -435,11 +455,23 @@ export default function ManageStudents() {
               </div>
             </div>
 
-            {/* Filter Search */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-800">
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                মোট অংশগ্রহণকারী: {toBengaliNumber(filteredSubmissions.length)} জন
-              </span>
+            {/* Filter Search & Toggle */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  মোট পরীক্ষার্থী: {toBengaliNumber(filteredSubmissions.length)} জন
+                </span>
+
+                <label className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-300 cursor-pointer bg-gray-50 dark:bg-gray-800 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={filterFirstAttemptOnly}
+                    onChange={(e) => setFilterFirstAttemptOnly(e.target.checked)}
+                    className="rounded text-primary-light focus:ring-primary-light"
+                  />
+                  <span>শুধুমাত্র ১ম প্রচেষ্টা (অফিসিয়াল মেধা তালিকা)</span>
+                </label>
+              </div>
 
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
