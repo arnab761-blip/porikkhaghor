@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "deploy": "npm run build && npx wrangler pages deploy dist --project-name porikkhaghor",
+    "deploy": "npm run build && npx wrangler pages deploy dist --project-name porikkhaghor --branch production",
     "deploy:firebase": "npm run build && npx firebase deploy --only hosting"
   },
   "dependencies": {
