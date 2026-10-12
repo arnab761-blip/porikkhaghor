@@ -138,7 +138,7 @@ export default function MyExams() {
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-grow">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                       <span className="text-xs font-bold bg-primary-light/10 text-primary-light px-3 py-1 rounded-full">
                         পরীক্ষা নং {toBengaliNumber(results.length - idx)}
                       </span>
@@ -146,6 +146,13 @@ export default function MyExams() {
                         <Calendar size={14} />
                         {formatDate(result.submittedAt)}
                       </span>
+                      <Link
+                        to={`/leaderboard/${result.examId}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-bold hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors"
+                      >
+                        <Award size={12} /> মেধা তালিকা
+                      </Link>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-primary-light dark:group-hover:text-primary-dark transition-colors">
                       {result.examTitle}

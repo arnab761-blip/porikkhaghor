@@ -174,7 +174,10 @@ export default function TakeExam() {
             if (remaining > 0) {
               setTimeLeft(remaining);
             } else {
-              setTimeLeft(0);
+              localStorage.removeItem(`exam_progress_${id}`);
+              alert('পরীক্ষার নির্ধারিত সময়সীমা ইতোমধ্যে শেষ হয়ে গেছে!');
+              navigate('/exams');
+              return;
             }
           } else {
             // New attempt - active questions set when startExam is clicked
@@ -399,7 +402,8 @@ export default function TakeExam() {
       examId: id,
       examTitle: exam.title,
       userId: user?.uid || 'guest',
-      userName: user?.displayName || 'Guest User',
+      userName: user?.displayName || user?.email?.split('@')[0] || 'শিক্ষার্থী',
+      userEmail: user?.email || '',
       answers,
       stats: { correct, wrong, skipped, totalScore, outOf },
       submittedAt: serverTimestamp()

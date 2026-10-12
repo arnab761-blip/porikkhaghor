@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { motion } from 'framer-motion';
-import { CheckCircle2, XCircle, MinusCircle, ArrowRight, Award } from 'lucide-react';
+import { CheckCircle2, XCircle, MinusCircle, ArrowRight, Award, Trophy } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import QuestionDiscussion from '../components/forum/QuestionDiscussion';
 import { MathText } from '../components/MathText';
@@ -14,6 +14,7 @@ export default function ExamResult() {
   const [examData, setExamData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [filterMode, setFilterMode] = useState<'all' | 'wrong' | 'skipped'>('all');
+  const [rankInfo, setRankInfo] = useState<{ rank: number; total: number } | null>(null);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -37,6 +38,25 @@ export default function ExamResult() {
         const examSnap = await getDoc(examRef);
         if (examSnap.exists()) {
           setExamData(examSnap.data());
+        }
+
+        // 3. Calculate rank
+        try {
+          const q = query(collection(db, 'results'), where('examId', '==', resData.examId));
+          const examResultsSnap = await getDocs(q);
+          const allScores = examResultsSnap.docs.map(d => ({
+            id: d.id,
+            score: Number(d.data().stats?.totalScore) || 0,
+            correct: Number(d.data().stats?.correct) || 0,
+            time: d.data().submittedAt?.toMillis ? d.data().submittedAt.toMillis() : 0
+          }));
+          allScores.sort((a, b) => b.score - a.score || b.correct - a.correct || a.time - b.time);
+          const rIndex = allScores.findIndex(s => s.id === resultId);
+          if (rIndex !== -1) {
+            setRankInfo({ rank: rIndex + 1, total: allScores.length });
+          }
+        } catch (rErr) {
+          console.error("Rank calculation error:", rErr);
         }
       } catch (error) {
         console.error(error);
@@ -94,6 +114,29 @@ export default function ExamResult() {
         <p className="text-xl mt-2 text-gray-600 dark:text-gray-400">
           {examData.title}
         </p>
+      </div>
+
+      {/* Rank & Merit Position Banner */}
+      <div className="mb-8 p-6 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white rounded-3xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4 text-center sm:text-left">
+          <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+            <Trophy size={30} className="text-white" />
+          </div>
+          <div>
+            <span className="text-xs uppercase tracking-wider font-bold text-amber-100">মেধা অবস্থান / Merit Rank</span>
+            <div className="text-2xl sm:text-3xl font-extrabold mt-0.5">
+              {rankInfo ? `${toBengaliNumber(rankInfo.rank)} নম্বর স্থান` : 'গণনা হচ্ছে...'}
+              {rankInfo && <span className="text-sm font-normal text-amber-100 ml-2">(মোট {toBengaliNumber(rankInfo.total)} জনের মধ্যে)</span>}
+            </div>
+          </div>
+        </div>
+
+        <Link
+          to={`/leaderboard/${resultData.examId}`}
+          className="px-6 py-3 bg-white text-orange-600 hover:bg-orange-50 font-bold rounded-2xl text-sm transition-all shadow-sm flex items-center gap-2 shrink-0 hover:scale-105"
+        >
+          <Award size={18} /> সম্পূর্ণ মেধা তালিকা দেখুন →
+        </Link>
       </div>
 
       {/* Overview Cards */}
@@ -239,9 +282,18 @@ export default function ExamResult() {
         })}
       </div>
 
-      <div className="mt-12 text-center">
-        <Link to="/exams" className="inline-flex items-center gap-2 px-8 py-3 bg-primary-light text-white rounded-xl font-medium hover:bg-primary-dark transition-colors">
-          আরও পরীক্ষা দিন <ArrowRight size={20} />
+      <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
+        <Link 
+          to={`/leaderboard/${resultData.examId}`}
+          className="inline-flex items-center gap-2 px-7 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold transition-all shadow-sm hover:scale-105"
+        >
+          <Trophy size={18} /> সম্পূর্ণ মেধা তালিকা দেখুন
+        </Link>
+        <Link 
+          to="/exams" 
+          className="inline-flex items-center gap-2 px-7 py-3 bg-primary-light hover:bg-primary-dark text-white rounded-xl font-bold transition-all shadow-sm hover:scale-105"
+        >
+          আরও পরীক্ষা দিন <ArrowRight size={18} />
         </Link>
       </div>
     </motion.div>

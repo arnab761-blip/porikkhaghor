@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { BookOpen, Home, User, Menu, X, Moon, Sun, LogOut } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,6 +30,15 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       localStorage.setItem('theme', 'light');
     }
   };
+
+  const location = useLocation();
+
+  const isHomeActive = location.pathname === '/';
+  const isExamsActive = location.pathname.startsWith('/exam') || 
+                        location.pathname.startsWith('/take-exam') || 
+                        location.pathname.startsWith('/result') || 
+                        location.pathname.startsWith('/leaderboard');
+  const isProfileActive = ['/dashboard', '/login', '/my-exams', '/performance', '/mistakes', '/manage-students', '/manage-packages', '/manage-resources', '/admin-settings', '/create-exam'].some(p => location.pathname.startsWith(p));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -118,19 +127,62 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       <Footer />
 
       {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 bg-background border-t border-gray-200 dark:border-gray-800 z-50 pb-safe">
-        <div className="flex justify-around items-center h-16">
-          <Link to="/" className="flex flex-col items-center p-2 text-gray-500 hover:text-primary-light dark:hover:text-primary-dark">
-            <Home size={20} />
-            <span className="text-xs mt-1">হোম</span>
+      <div className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 z-50 pb-safe shadow-lg">
+        <div className="flex justify-around items-center h-16 relative">
+          {/* Home Tab */}
+          <Link 
+            to="/" 
+            className={`relative flex flex-col items-center justify-center w-full h-full py-1 transition-all duration-200 ${
+              isHomeActive 
+                ? 'text-primary-light dark:text-primary-dark font-bold' 
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            {isHomeActive && (
+              <span className="absolute top-0 w-10 h-1 bg-primary-light dark:bg-primary-dark rounded-full shadow-sm" />
+            )}
+            <div className={`p-1 rounded-xl transition-all ${isHomeActive ? 'bg-primary-light/10 dark:bg-primary-dark/20 scale-110' : ''}`}>
+              <Home size={20} />
+            </div>
+            <span className={`text-[11px] mt-0.5 ${isHomeActive ? 'font-bold' : 'font-normal'}`}>হোম</span>
           </Link>
-          <Link to="/exams" className="flex flex-col items-center p-2 text-gray-500 hover:text-primary-light dark:hover:text-primary-dark">
-            <BookOpen size={20} />
-            <span className="text-xs mt-1">পরীক্ষা</span>
+
+          {/* Exams Tab */}
+          <Link 
+            to="/exams" 
+            className={`relative flex flex-col items-center justify-center w-full h-full py-1 transition-all duration-200 ${
+              isExamsActive 
+                ? 'text-primary-light dark:text-primary-dark font-bold' 
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            {isExamsActive && (
+              <span className="absolute top-0 w-10 h-1 bg-primary-light dark:bg-primary-dark rounded-full shadow-sm" />
+            )}
+            <div className={`p-1 rounded-xl transition-all ${isExamsActive ? 'bg-primary-light/10 dark:bg-primary-dark/20 scale-110' : ''}`}>
+              <BookOpen size={20} />
+            </div>
+            <span className={`text-[11px] mt-0.5 ${isExamsActive ? 'font-bold' : 'font-normal'}`}>পরীক্ষা</span>
           </Link>
-          <Link to={user ? "/dashboard" : "/login"} className="flex flex-col items-center p-2 text-gray-500 hover:text-primary-light dark:hover:text-primary-dark">
-            <User size={20} />
-            <span className="text-xs mt-1">{user ? "প্রোফাইল" : "লগইন"}</span>
+
+          {/* Profile / Dashboard Tab */}
+          <Link 
+            to={user ? "/dashboard" : "/login"} 
+            className={`relative flex flex-col items-center justify-center w-full h-full py-1 transition-all duration-200 ${
+              isProfileActive 
+                ? 'text-primary-light dark:text-primary-dark font-bold' 
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            {isProfileActive && (
+              <span className="absolute top-0 w-10 h-1 bg-primary-light dark:bg-primary-dark rounded-full shadow-sm" />
+            )}
+            <div className={`p-1 rounded-xl transition-all ${isProfileActive ? 'bg-primary-light/10 dark:bg-primary-dark/20 scale-110' : ''}`}>
+              <User size={20} />
+            </div>
+            <span className={`text-[11px] mt-0.5 ${isProfileActive ? 'font-bold' : 'font-normal'}`}>
+              {user ? "প্রোফাইল" : "লগইন"}
+            </span>
           </Link>
         </div>
       </div>

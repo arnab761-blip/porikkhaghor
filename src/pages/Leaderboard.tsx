@@ -1,0 +1,415 @@
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
+import { motion } from 'framer-motion';
+import { 
+  Award, 
+  ArrowLeft, 
+  Search, 
+  Users, 
+  TrendingUp, 
+  FileText,
+  Trophy
+} from 'lucide-react';
+
+interface ResultEntry {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  stats: {
+    totalScore: number;
+    outOf: number;
+    correct: number;
+    wrong: number;
+    skipped: number;
+  };
+  submittedAt: any;
+}
+
+export default function Leaderboard() {
+  const { examId } = useParams();
+  const { user, role } = useAuth();
+  const [examTitle, setExamTitle] = useState('');
+  const [results, setResults] = useState<ResultEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const isTeacher = role === 'owner' || role === 'assistant';
+
+  useEffect(() => {
+    if (!examId) return;
+
+    const fetchLeaderboard = async () => {
+      try {
+        setLoading(true);
+        // 1. Fetch Exam title
+        const examSnap = await getDoc(doc(db, 'exams', examId));
+        if (examSnap.exists()) {
+          setExamTitle(examSnap.data().title || 'পরীক্ষা');
+        }
+
+        // 2. Fetch all submissions for this exam
+        const q = query(collection(db, 'results'), where('examId', '==', examId));
+        const snap = await getDocs(q);
+
+        const fetchedList: ResultEntry[] = [];
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          fetchedList.push({
+            id: docSnap.id,
+            userId: data.userId || '',
+            userName: data.userName || 'শিক্ষার্থী',
+            userEmail: data.userEmail || '',
+            stats: data.stats || { totalScore: 0, outOf: 100, correct: 0, wrong: 0, skipped: 0 },
+            submittedAt: data.submittedAt
+          });
+        });
+
+        // 3. Sort by totalScore desc, then correct desc, then wrong asc, then submittedAt asc
+        fetchedList.sort((a, b) => {
+          const scoreA = Number(a.stats?.totalScore) || 0;
+          const scoreB = Number(b.stats?.totalScore) || 0;
+          if (scoreB !== scoreA) return scoreB - scoreA;
+
+          const corA = Number(a.stats?.correct) || 0;
+          const corB = Number(b.stats?.correct) || 0;
+          if (corB !== corA) return corB - corA;
+
+          const wrgA = Number(a.stats?.wrong) || 0;
+          const wrgB = Number(b.stats?.wrong) || 0;
+          if (wrgA !== wrgB) return wrgA - wrgB;
+
+          const timeA = a.submittedAt?.toMillis ? a.submittedAt.toMillis() : 0;
+          const timeB = b.submittedAt?.toMillis ? b.submittedAt.toMillis() : 0;
+          return timeA - timeB;
+        });
+
+        setResults(fetchedList);
+      } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, [examId]);
+
+  const toBengaliNumber = (num: number | string) => {
+    if (num === null || num === undefined || Number.isNaN(Number(num))) return '০';
+    const bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    return num.toString().replace(/\d/g, (d) => bengaliDigits[parseInt(d)]);
+  };
+
+  // Stats calculation
+  const totalStudents = results.length;
+  const highestScore = totalStudents > 0 ? results[0].stats?.totalScore : 0;
+  const averageScore = totalStudents > 0 
+    ? (results.reduce((acc, curr) => acc + (Number(curr.stats?.totalScore) || 0), 0) / totalStudents).toFixed(2)
+    : 0;
+
+  // Filtered list
+  const filteredResults = useMemo(() => {
+    if (!searchQuery.trim()) return results;
+    const q = searchQuery.toLowerCase();
+    return results.filter(r => 
+      (r.userName && r.userName.toLowerCase().includes(q)) ||
+      (r.userEmail && r.userEmail.toLowerCase().includes(q))
+    );
+  }, [results, searchQuery]);
+
+  // Current user's rank
+  const myRankIndex = user ? results.findIndex(r => r.userId === user.uid) : -1;
+  const myRank = myRankIndex !== -1 ? myRankIndex + 1 : null;
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-primary-light border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-gray-500 font-medium">মেধাতালিকা তৈরি হচ্ছে...</p>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      className="max-w-5xl mx-auto pb-16 px-4"
+    >
+      {/* Top Breadcrumb / Back button */}
+      <div className="mb-6 flex items-center justify-between">
+        <Link 
+          to="/exams" 
+          className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary-light dark:hover:text-primary-dark transition-colors"
+        >
+          <ArrowLeft size={16} /> সকল পরীক্ষায় ফিরে যান
+        </Link>
+      </div>
+
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-primary-light to-primary-dark text-white rounded-3xl p-6 sm:p-8 shadow-sm mb-8 relative overflow-hidden">
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold mb-3">
+            <Trophy size={14} className="text-amber-300" /> অফিসিয়াল মেধাতালিকা
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-heading font-bold mb-2">
+            {examTitle || 'পরীক্ষার ফলাফল ও মেধা তালিকা'}
+          </h1>
+          <p className="text-white/80 text-sm">
+            এই পরীক্ষায় অংশগ্রহণকারী সকল শিক্ষার্থীর প্রাপ্ত নম্বরের ভিত্তিতে স্বয়ংক্রিয়ভাবে সাজানো মেধা তালিকা।
+          </p>
+        </div>
+      </div>
+
+      {/* Overview Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <Users size={24} />
+          </div>
+          <div>
+            <span className="text-xs text-gray-400 font-medium">মোট পরীক্ষার্থী</span>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5">
+              {toBengaliNumber(totalStudents)} জন
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+            <Trophy size={24} />
+          </div>
+          <div>
+            <span className="text-xs text-gray-400 font-medium">সর্বোচ্চ নম্বর</span>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5">
+              {toBengaliNumber(highestScore)}
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <TrendingUp size={24} />
+          </div>
+          <div>
+            <span className="text-xs text-gray-400 font-medium">গড় নম্বর (Average)</span>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5">
+              {toBengaliNumber(averageScore)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* User's Own Rank Banner (if student took this exam) */}
+      {myRank && (
+        <div className="mb-8 p-5 bg-amber-500/10 dark:bg-amber-500/20 border-2 border-amber-500/40 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center font-bold text-xl shadow-sm">
+              #{toBengaliNumber(myRank)}
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg">
+                আপনার মেধা অবস্থান: {toBengaliNumber(myRank)} নম্বর স্থান
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                মোট {toBengaliNumber(totalStudents)} জন পরীক্ষার্থীর মধ্যে আপনার প্রাপ্ত স্কোর: {toBengaliNumber(results[myRankIndex].stats?.totalScore)}
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to={`/result/${results[myRankIndex].id}`}
+            className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition-all shadow-sm shrink-0 flex items-center gap-1.5"
+          >
+            <FileText size={16} /> নিজের খাতা ও ব্যাখ্যা দেখুন
+          </Link>
+        </div>
+      )}
+
+      {/* Top 3 Podium (Screenshots / Premium Look) */}
+      {results.length >= 3 && !searchQuery && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          {/* 2nd Place */}
+          <div className="order-2 sm:order-1 bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 text-center shadow-sm relative pt-8">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-slate-300 text-slate-800 font-bold flex items-center justify-center text-sm shadow">
+              ২
+            </div>
+            <h4 className="font-bold text-gray-900 dark:text-white text-base line-clamp-1">{results[1].userName}</h4>
+            <div className="text-2xl font-bold text-slate-600 dark:text-slate-300 my-1">
+              {toBengaliNumber(results[1].stats?.totalScore)} <span className="text-xs font-normal text-gray-400">/ {toBengaliNumber(results[1].stats?.outOf)}</span>
+            </div>
+            <div className="text-xs text-gray-400">
+              সঠিক: {toBengaliNumber(results[1].stats?.correct)} | ভুল: {toBengaliNumber(results[1].stats?.wrong)}
+            </div>
+          </div>
+
+          {/* 1st Place (Champion) */}
+          <div className="order-1 sm:order-2 bg-gradient-to-b from-amber-50 to-white dark:from-amber-950/20 dark:to-gray-900 p-6 rounded-3xl border-2 border-amber-400 text-center shadow-md relative pt-9 transform sm:-translate-y-2">
+            <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-amber-400 text-amber-950 font-bold flex items-center justify-center text-base shadow-md">
+              👑 ১
+            </div>
+            <h4 className="font-bold text-gray-900 dark:text-white text-lg line-clamp-1">{results[0].userName}</h4>
+            <div className="text-3xl font-extrabold text-amber-500 my-1">
+              {toBengaliNumber(results[0].stats?.totalScore)} <span className="text-xs font-normal text-gray-400">/ {toBengaliNumber(results[0].stats?.outOf)}</span>
+            </div>
+            <div className="text-xs text-amber-700 dark:text-amber-300 font-medium">
+              সঠিক: {toBengaliNumber(results[0].stats?.correct)} | ভুল: {toBengaliNumber(results[0].stats?.wrong)}
+            </div>
+          </div>
+
+          {/* 3rd Place */}
+          <div className="order-3 bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 text-center shadow-sm relative pt-8">
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-amber-700/60 text-white font-bold flex items-center justify-center text-sm shadow">
+              ৩
+            </div>
+            <h4 className="font-bold text-gray-900 dark:text-white text-base line-clamp-1">{results[2].userName}</h4>
+            <div className="text-2xl font-bold text-amber-800 dark:text-amber-400 my-1">
+              {toBengaliNumber(results[2].stats?.totalScore)} <span className="text-xs font-normal text-gray-400">/ {toBengaliNumber(results[2].stats?.outOf)}</span>
+            </div>
+            <div className="text-xs text-gray-400">
+              সঠিক: {toBengaliNumber(results[2].stats?.correct)} | ভুল: {toBengaliNumber(results[2].stats?.wrong)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Search Bar & Table Header */}
+      <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <Award className="text-primary-light" size={22} /> মেধা তালিকা তালিকা ({filteredResults.length} জন)
+          </h3>
+
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="শিক্ষার্থীর নাম বা ইমেইল খুঁজুন..."
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-light dark:text-white"
+            />
+          </div>
+        </div>
+
+        {filteredResults.length === 0 ? (
+          <div className="text-center py-12 text-gray-500 font-medium">
+            এখনো কেউ এই পরীক্ষায় অংশগ্রহণ করেনি অথবা আপনার অনুসন্ধানের সাথে মিল নেই।
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-800 text-gray-400 font-medium text-xs">
+                  <th className="pb-3 text-center w-16">র‌্যাঙ্ক</th>
+                  <th className="pb-3">শিক্ষার্থীর নাম</th>
+                  <th className="pb-3 text-center">প্রাপ্ত নম্বর</th>
+                  <th className="pb-3 text-center hidden md:table-cell">সঠিক / ভুল</th>
+                  <th className="pb-3 text-right hidden sm:table-cell">জমার সময়</th>
+                  {isTeacher && <th className="pb-3 text-right">খাতা</th>}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                {filteredResults.map((item, index) => {
+                  const rank = index + 1;
+                  const isMe = user && item.userId === user.uid;
+                  const formattedTime = item.submittedAt?.toDate 
+                    ? item.submittedAt.toDate().toLocaleString('bn-BD', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })
+                    : 'এখনই';
+
+                  return (
+                    <tr 
+                      key={item.id} 
+                      className={`transition-colors ${
+                        isMe 
+                          ? 'bg-amber-500/10 dark:bg-amber-500/20 font-semibold' 
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                      }`}
+                    >
+                      {/* Rank */}
+                      <td className="py-4 text-center">
+                        {rank === 1 ? (
+                          <span className="inline-flex items-center justify-center w-7 h-7 bg-amber-400 text-amber-950 rounded-full font-bold text-xs shadow-sm">
+                            ১
+                          </span>
+                        ) : rank === 2 ? (
+                          <span className="inline-flex items-center justify-center w-7 h-7 bg-slate-300 text-slate-800 rounded-full font-bold text-xs shadow-sm">
+                            ২
+                          </span>
+                        ) : rank === 3 ? (
+                          <span className="inline-flex items-center justify-center w-7 h-7 bg-amber-700/60 text-white rounded-full font-bold text-xs shadow-sm">
+                            ৩
+                          </span>
+                        ) : (
+                          <span className="text-gray-500 font-medium">
+                            {toBengaliNumber(rank)}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Name */}
+                      <td className="py-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900 dark:text-white font-medium">
+                            {item.userName}
+                          </span>
+                          {isMe && (
+                            <span className="text-[10px] bg-primary-light text-white font-bold px-2 py-0.5 rounded-full">
+                              আপনি
+                            </span>
+                          )}
+                        </div>
+                        {isTeacher && item.userEmail && (
+                          <span className="text-xs text-gray-400 block">{item.userEmail}</span>
+                        )}
+                      </td>
+
+                      {/* Score */}
+                      <td className="py-4 text-center font-bold text-primary-light dark:text-primary-dark">
+                        {toBengaliNumber(item.stats?.totalScore)}
+                        <span className="text-xs text-gray-400 font-normal"> / {toBengaliNumber(item.stats?.outOf)}</span>
+                      </td>
+
+                      {/* Correct / Wrong */}
+                      <td className="py-4 text-center hidden md:table-cell text-xs">
+                        <span className="text-green-600 font-medium">{toBengaliNumber(item.stats?.correct)} সঠিক</span>
+                        <span className="text-gray-300 dark:text-gray-700 mx-1.5">|</span>
+                        <span className="text-red-500 font-medium">{toBengaliNumber(item.stats?.wrong)} ভুল</span>
+                      </td>
+
+                      {/* Submitted At */}
+                      <td className="py-4 text-right hidden sm:table-cell text-xs text-gray-500">
+                        {formattedTime}
+                      </td>
+
+                      {/* Teacher view student answer sheet */}
+                      {isTeacher && (
+                        <td className="py-4 text-right">
+                          <Link 
+                            to={`/result/${item.id}`}
+                            className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg text-primary-light font-medium transition-colors"
+                          >
+                            <FileText size={12} /> দেখুন
+                          </Link>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}

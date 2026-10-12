@@ -494,19 +494,44 @@ export default function ExamList() {
     const totalMarks = (exam.totalQuestions || 0) * (exam.marksPerQuestion || 1);
     const isLocked = exam.isPaid && !userData?.hasPaidAccess;
 
+    // Check if exam is in-progress
+    const savedProgressStr = localStorage.getItem(`exam_progress_${exam.id}`);
+    let isExamInProgress = false;
+    if (savedProgressStr) {
+      try {
+        const parsed = JSON.parse(savedProgressStr);
+        if (parsed.endTime && parsed.endTime > Date.now()) {
+          isExamInProgress = true;
+        } else if (parsed.endTime && parsed.endTime <= Date.now()) {
+          localStorage.removeItem(`exam_progress_${exam.id}`);
+        }
+      } catch (e) {
+        // ignore parse error
+      }
+    }
+
     return (
       <motion.div
         key={exam.id}
         whileHover={{ y: -4 }}
-        className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col p-6 transition-all hover:shadow-xl group relative"
+        className={`bg-white dark:bg-gray-900 rounded-3xl border shadow-sm overflow-hidden flex flex-col p-6 transition-all hover:shadow-xl group relative ${
+          isExamInProgress 
+            ? 'border-amber-400/80 dark:border-amber-500/50 ring-1 ring-amber-400/30' 
+            : 'border-gray-100 dark:border-gray-800'
+        }`}
       >
         {/* Top Badges */}
         <div className="flex justify-between items-start mb-4">
-          <span className="text-[11px] font-semibold px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full line-clamp-1 max-w-[65%]">
+          <span className="text-[11px] font-semibold px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full line-clamp-1 max-w-[60%]">
             {exam.category || 'সাধারণ'}
           </span>
 
-          {exam.isPaid ? (
+          {isExamInProgress ? (
+            <span className="text-xs font-bold px-3 py-1 bg-amber-500 text-white rounded-full flex items-center gap-1.5 shadow-sm shadow-amber-500/20">
+              <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+              চলমান পরীক্ষা
+            </span>
+          ) : exam.isPaid ? (
             userData?.hasPaidAccess ? (
               <span className="text-xs font-bold px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-full border border-blue-200/60 dark:border-blue-800/40">
                 PURCHASED
@@ -524,7 +549,11 @@ export default function ExamList() {
         </div>
 
         {/* Center Document Icon (Screenshots 3 & 4) */}
-        <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform duration-300">
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform duration-300 ${
+          isExamInProgress
+            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400'
+            : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400'
+        }`}>
           <FileText size={28} />
         </div>
 
@@ -564,23 +593,34 @@ export default function ExamList() {
           ) : (
             <Link
               to={`/take-exam/${exam.id}`}
-              className="w-full py-3 bg-primary-light hover:bg-primary-dark text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm transition-all group-hover:shadow-md"
+              className={`w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm transition-all group-hover:shadow-md ${
+                isExamInProgress
+                  ? 'bg-amber-500 hover:bg-amber-600 text-white ring-2 ring-amber-400/50 shadow-amber-500/20'
+                  : 'bg-primary-light hover:bg-primary-dark text-white'
+              }`}
             >
-              <PlayCircle size={18} /> Start Exam →
+              <PlayCircle size={18} /> {isExamInProgress ? 'Continue Exam →' : 'Start Exam →'}
             </Link>
           )}
 
-          {/* Teacher Delete Option */}
-          {(role === 'owner' || role === 'assistant') && (
-            <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-800 flex justify-center">
+          {/* Footer Action Links: Leaderboard & Teacher Delete */}
+          <div className="pt-3 mt-3 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs">
+            <Link
+              to={`/leaderboard/${exam.id}`}
+              className="text-gray-500 hover:text-primary-light dark:hover:text-primary-dark font-medium flex items-center gap-1 transition-colors"
+            >
+              <Award size={13} className="text-amber-500" /> মেধা তালিকা
+            </Link>
+
+            {(role === 'owner' || role === 'assistant') && (
               <button
                 onClick={(e) => handleDeleteExam(exam.id, e)}
-                className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:underline transition-colors"
+                className="flex items-center gap-1 text-red-500 hover:text-red-700 hover:underline transition-colors"
               >
-                <Trash2 size={13} /> পরীক্ষা ডিলিট করুন
+                <Trash2 size={13} /> পরীক্ষা ডিলিট
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </motion.div>
     );

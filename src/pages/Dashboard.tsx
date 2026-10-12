@@ -64,8 +64,8 @@ export default function Dashboard() {
             <div className="w-12 h-12 bg-green-500/10 text-green-600 dark:text-green-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Users size={24} />
             </div>
-            <h3 className="text-xl font-bold mb-2">শিক্ষার্থী ও পেমেন্ট</h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">শিক্ষার্থীদের পেইড পরীক্ষা বা রিসোর্সের ম্যানুয়াল অ্যাক্সেস দিন।</p>
+            <h3 className="text-xl font-bold mb-2">শিক্ষার্থী ও ফলাফল ম্যানেজমেন্ট</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">শিক্ষার্থীদের ব্যক্তিগত প্রোফাইল, পরীক্ষার ফলাফল, খাতা এবং পেইড অ্যাক্সেস চেক করুন।</p>
           </Link>
 
           <Link to="/admin-settings" className="group bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all hover:-translate-y-1">
