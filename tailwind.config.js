@@ -28,8 +28,8 @@ export default {
         }
       },
       fontFamily: {
-        heading: ['"Anek Bangla"', 'sans-serif'],
-        body: ['"Hind Siliguri"', 'sans-serif'],
+        heading: ['"Anek Bangla"', '"Noto Sans Bengali"', 'sans-serif'],
+        body: ['"Anek Bangla"', '"Noto Sans Bengali"', 'sans-serif'],
       }
     },
   },

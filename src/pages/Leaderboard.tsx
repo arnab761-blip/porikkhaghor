@@ -302,7 +302,7 @@ export default function Leaderboard() {
       <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Award className="text-primary-light" size={22} /> মেধা তালিকা তালিকা ({filteredResults.length} জন)
+            <Award className="text-primary-light" size={22} /> মেধা তালিকা ({toBengaliNumber(filteredResults.length)} জন)
           </h3>
 
           <div className="relative w-full sm:w-72">
