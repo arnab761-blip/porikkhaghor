@@ -363,7 +363,7 @@ export default function ManagePackages() {
                   key={i}
                   type="button"
                   onClick={() => handleQuickAddFeature(sug)}
-                  className="text-xs px-2.5 py-1 rounded-lg bg-primary-light/5 hover:bg-primary-light/10 text-primary-light border border-primary-light/20 transition-colors"
+                  className="text-xs px-2.5 py-1 rounded-lg bg-primary-light/5 hover:bg-primary-light/10 dark:bg-primary-dark/15 dark:hover:bg-primary-dark/25 text-primary-light dark:text-primary-dark border border-primary-light/20 dark:border-primary-dark/30 transition-colors"
                 >
                   +{sug}
                 </button>

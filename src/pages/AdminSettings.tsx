@@ -102,7 +102,7 @@ export default function AdminSettings() {
   return (
     <div className="max-w-2xl mx-auto py-10 px-4">
       <h1 className="text-3xl font-heading font-bold mb-8 flex items-center gap-3 text-gray-900 dark:text-white">
-        <Settings className="text-primary-light" size={32} /> অ্যাডমিন সেটিংস
+        <Settings className="text-primary-light dark:text-primary-dark" size={32} /> অ্যাডমিন সেটিংস
       </h1>
       
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-8">
@@ -236,7 +236,7 @@ export default function AdminSettings() {
       {role === 'owner' && (
         <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-8 mt-8">
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
-            <UserPlus className="text-primary-light" size={24} /> শিক্ষক/সহকারী যুক্ত করুন
+            <UserPlus className="text-primary-light dark:text-primary-dark" size={24} /> শিক্ষক/সহকারী যুক্ত করুন
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             যেকোনো নতুন শিক্ষক বা সহকারীকে ওয়েবসাইটের ড্যাশবোর্ডে অ্যাক্সেস দিতে তার জিমেইলটি নিচে দিন। (দ্রষ্টব্য: তাকে অবশ্যই আগে একবার ওয়েবসাইটে জিমেইল দিয়ে লগইন থাকতে হবে)।

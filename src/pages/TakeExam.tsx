@@ -748,7 +748,7 @@ export default function TakeExam() {
                                     const disabled = !isSelected && (isMaxReached || isTotalReached);
                                     
                                     return (
-                                      <label key={subj} className={`flex items-center gap-2 text-sm px-2 py-1.5 border rounded-md transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800'} ${isSelected ? 'border-primary-light bg-primary-light/10 text-primary-dark dark:text-primary-light' : 'border-gray-200 dark:border-gray-700'}`}>
+                                      <label key={subj} className={`flex items-center gap-2 text-sm px-2 py-1.5 border rounded-md transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800'} ${isSelected ? 'border-primary-light bg-primary-light/10 text-primary-light dark:text-primary-dark dark:bg-primary-dark/20 dark:border-primary-dark' : 'border-gray-200 dark:border-gray-700'}`}>
                                         <input 
                                           type="checkbox"
                                           disabled={disabled}
@@ -941,7 +941,7 @@ export default function TakeExam() {
             return (
               <div key={originalIdx} id={`q-${originalIdx}`}>
                 {showSubjectHeader && (
-                  <div className="bg-primary-light/10 text-primary-light font-bold text-xl px-6 py-3 rounded-lg mb-4 mt-8 first:mt-0">
+                  <div className="bg-primary-light/10 dark:bg-primary-dark/20 text-primary-light dark:text-primary-dark font-bold text-xl px-6 py-3 rounded-lg mb-4 mt-8 first:mt-0">
                     {q.subject || 'সাধারণ'}
                   </div>
                 )}
@@ -995,7 +995,7 @@ export default function TakeExam() {
           >
             <div className="flex-grow">
               {exam.hasSections && activeQuestions[currentQuestionIndex].subject && (
-                <div className="bg-primary-light/10 text-primary-light font-bold text-sm px-3 py-1 rounded-full mb-4 inline-block">
+                <div className="bg-primary-light/10 dark:bg-primary-dark/20 text-primary-light dark:text-primary-dark font-bold text-sm px-3 py-1 rounded-full mb-4 inline-block">
                   {activeQuestions[currentQuestionIndex].subject}
                 </div>
               )}

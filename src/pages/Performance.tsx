@@ -247,7 +247,7 @@ export default function Performance() {
 
                     {/* Exam Title Below Bar */}
                     <div 
-                      className="mt-3 text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate w-full text-center px-1 font-medium group-hover:text-primary-light transition-colors" 
+                      className="mt-3 text-xs md:text-sm text-gray-600 dark:text-gray-400 truncate w-full text-center px-1 font-medium group-hover:text-primary-light dark:group-hover:text-primary-dark transition-colors" 
                       title={res.examTitle}
                     >
                       {res.examTitle.length > 10 ? res.examTitle.slice(0, 10) + '...' : res.examTitle}

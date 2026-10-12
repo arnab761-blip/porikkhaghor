@@ -255,9 +255,9 @@ export default function ManageStudents() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-heading font-bold flex items-center gap-3 text-gray-900 dark:text-white">
-            <ShieldCheck className="text-primary-light" size={32} /> শিক্ষার্থী ও পরীক্ষার ফলাফল ম্যানেজমেন্ট
+            <ShieldCheck className="text-primary-light dark:text-primary-dark" size={32} /> শিক্ষার্থী ও পরীক্ষার ফলাফল ম্যানেজমেন্ট
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             শিক্ষার্থীদের ব্যক্তিগত প্রোফাইল, দেওয়া পরীক্ষার উত্তরপত্র এবং সামগ্রিক ফলাফল পরীক্ষা করুন।
           </p>
         </div>
@@ -268,7 +268,7 @@ export default function ManageStudents() {
             onClick={() => setActiveTab('student')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
               activeTab === 'student'
-                ? 'bg-white dark:bg-gray-900 text-primary-light shadow-sm'
+                ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
                 : 'text-gray-600 dark:text-gray-400'
             }`}
           >
@@ -278,7 +278,7 @@ export default function ManageStudents() {
             onClick={() => setActiveTab('exam')}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
               activeTab === 'exam'
-                ? 'bg-white dark:bg-gray-900 text-primary-light shadow-sm'
+                ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
                 : 'text-gray-600 dark:text-gray-400'
             }`}
           >
@@ -293,7 +293,7 @@ export default function ManageStudents() {
           {/* Search Box */}
           <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 sm:p-8">
             <h3 className="font-bold text-lg mb-2 text-gray-900 dark:text-white flex items-center gap-2">
-              <Search className="text-primary-light" size={20} /> শিক্ষার্থী খুঁজুন
+              <Search className="text-primary-light dark:text-primary-dark" size={20} /> শিক্ষার্থী খুঁজুন
             </h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm mb-6">
               যেকোনো শিক্ষার্থীর ইমেইল লিখে খুঁজুন। আপনি তার পেইড এক্সেস স্ট্যাটাস দেখতে পারবেন এবং সে কোন কোন পরীক্ষা দিয়েছে ও কত নম্বর পেয়েছে তা দেখতে পারবেন।
@@ -330,15 +330,15 @@ export default function ManageStudents() {
               <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 sm:p-8">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-primary-light/10 text-primary-light rounded-2xl flex items-center justify-center font-bold text-2xl shrink-0">
+                    <div className="w-16 h-16 bg-primary-light/10 dark:bg-primary-dark/20 text-primary-light dark:text-primary-dark rounded-2xl flex items-center justify-center font-bold text-2xl shrink-0">
                       {foundUser.name ? foundUser.name.charAt(0).toUpperCase() : foundUser.email.charAt(0).toUpperCase()}
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white">{foundUser.name || 'শিক্ষার্থী'}</h3>
-                      <p className="text-gray-500 text-sm">{foundUser.email}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">{foundUser.email}</p>
                       <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 dark:bg-gray-800">
                         স্ট্যাটাস: 
-                        <span className={foundUser.hasPaidAccess ? "text-green-600 font-bold" : "text-gray-500"}>
+                        <span className={foundUser.hasPaidAccess ? "text-green-600 font-bold" : "text-gray-500 dark:text-gray-400"}>
                           {foundUser.hasPaidAccess ? 'পেইড শিক্ষার্থী (Premium Access)' : 'ফ্রি শিক্ষার্থী (Free Plan)'}
                         </span>
                       </div>
@@ -368,9 +368,9 @@ export default function ManageStudents() {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
-                      <BookOpen size={20} className="text-primary-light" /> এই শিক্ষার্থীর দেওয়া পরীক্ষাসমূহ ({userResults.length}টি)
+                      <BookOpen size={20} className="text-primary-light dark:text-primary-dark" /> এই শিক্ষার্থীর দেওয়া পরীক্ষাসমূহ ({userResults.length}টি)
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1">শিক্ষার্থীর কোনো উত্তরপত্রে ভুল হলে বা ব্যাখ্যা দেখতে "খাতা দেখুন" লিংকে চাপ দিন।</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">শিক্ষার্থীর কোনো উত্তরপত্রে ভুল হলে বা ব্যাখ্যা দেখতে "খাতা দেখুন" লিংকে চাপ দিন।</p>
                   </div>
                 </div>
 

@@ -558,7 +558,7 @@ export default function CreateExam() {
                   setIsCustomCategory(!isCustomCategory);
                   if (!isCustomCategory) setCustomCategory('');
                 }}
-                className="text-xs text-primary-light hover:underline flex items-center gap-1"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-medium"
               >
                 <FolderPlus size={14} />
                 {isCustomCategory ? 'তালিকায় থাকা ক্যাটাগরি বেছে নিন' : '+ নতুন ক্যাটাগরি তৈরি'}
@@ -570,7 +570,7 @@ export default function CreateExam() {
                 type="text" 
                 value={customCategory} 
                 onChange={e => setCustomCategory(e.target.value)} 
-                className="w-full p-2.5 border rounded-xl dark:bg-gray-800 dark:border-gray-700 focus:ring-2 focus:ring-primary-light" 
+                className="w-full p-2.5 border rounded-xl dark:bg-gray-800 dark:border-gray-700 dark:text-white focus:ring-2 focus:ring-primary-light" 
                 placeholder="নতুন ক্যাটাগরির নাম লিখুন (যেমন: Textile Model Test)" 
               />
             ) : (
@@ -584,7 +584,7 @@ export default function CreateExam() {
                     setSelectedCategory(e.target.value);
                   }
                 }}
-                className="w-full p-2.5 border rounded-xl dark:bg-gray-800 dark:border-gray-700 bg-white"
+                className="w-full p-2.5 border rounded-xl dark:bg-gray-800 dark:border-gray-700 bg-white dark:text-white"
               >
                 {availableCategories.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
@@ -592,7 +592,7 @@ export default function CreateExam() {
                 <option value="__NEW__">+ নতুন ক্যাটাগরি / ফোল্ডার তৈরি করুন...</option>
               </select>
             )}
-            <p className="text-xs text-gray-400 mt-1">একই বিষয়ের সব পরীক্ষা একই ফোল্ডারে জমা হবে</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">একই বিষয়ের সব পরীক্ষা একই ফোল্ডারে জমা হবে</p>
           </div>
 
           {/* Sub-Category / Chapter Folder */}
@@ -602,7 +602,7 @@ export default function CreateExam() {
               type="text" 
               value={subCategory} 
               onChange={e => setSubCategory(e.target.value)} 
-              className="w-full p-2.5 border rounded-xl dark:bg-gray-800 dark:border-gray-700" 
+              className="w-full p-2.5 border rounded-xl dark:bg-gray-800 dark:border-gray-700 dark:text-white" 
               placeholder="যেমন: ১ম পত্র, পেপার ফাইনাল, বা অধ্যায় ভিত্তিক" 
             />
             <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -611,7 +611,7 @@ export default function CreateExam() {
                   key={chip}
                   type="button"
                   onClick={() => setSubCategory(chip)}
-                  className="text-[11px] px-2 py-0.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+                  className="text-[11px] px-2 py-0.5 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200/60 dark:border-gray-700 transition-colors"
                 >
                   +{chip}
                 </button>
@@ -773,7 +773,7 @@ export default function CreateExam() {
 
           <div className="mb-6">
             <h3 className="font-semibold mb-3">সরল ঐচ্ছিক বিষয়সমূহ (Simple Optional Subjects)</h3>
-            <p className="text-xs text-gray-500 mb-2">স্টুডেন্ট এই লিস্ট থেকে যেকোনো নির্দিষ্ট সংখ্যক বিষয় নির্বাচন করবে। (এটি গুচ্ছ বা বান্ডেল সিস্টেম নয়)</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">স্টুডেন্ট এই লিস্ট থেকে যেকোনো নির্দিষ্ট সংখ্যক বিষয় নির্বাচন করবে। (এটি গুচ্ছ বা বান্ডেল সিস্টেম নয়)</p>
             <div className="flex flex-wrap gap-3 mb-3">
               {detectedSubjects.filter(s => !compulsorySubjects.includes(s)).map(subj => (
                 <label key={subj} className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer">
@@ -811,11 +811,11 @@ export default function CreateExam() {
 
 
           {/* ADVANCED GROUP RULES */}
-          <div className="mb-8 border-l-4 border-l-blue-500 pl-4 py-2 bg-blue-50 dark:bg-blue-900/10 rounded-r-xl">
+          <div className="mb-8 border-l-4 border-l-blue-500 pl-4 py-2 bg-blue-50 dark:bg-blue-950/40 rounded-r-xl">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
-                <h3 className="font-semibold text-blue-800 dark:text-blue-300">অ্যাডভান্সড গ্রুপ লজিক (Advanced Group Rules)</h3>
-                <p className="text-xs text-blue-600/80 dark:text-blue-400/80 mt-1">গুচ্ছ বা জটিল লজিকের জন্য (যেমন: অপশন ১ থেকে অন্তত ১টি নিতেই হবে, বাকিটি অপশন ২ থেকে)</p>
+                <h3 className="font-semibold text-blue-800 dark:text-blue-200">অ্যাডভান্সড গ্রুপ লজিক (Advanced Group Rules)</h3>
+                <p className="text-xs text-blue-600/90 dark:text-blue-300/90 mt-1">গুচ্ছ বা জটিল লজিকের জন্য (যেমন: অপশন ১ থেকে অন্তত ১টি নিতেই হবে, বাকিটি অপশন ২ থেকে)</p>
               </div>
               <button 
                 onClick={addGroupRule}
@@ -978,7 +978,7 @@ export default function CreateExam() {
               <h3 className="font-semibold">ঐচ্ছিক বিষয়/বান্ডেল (Optional Rules)</h3>
               <button 
                 onClick={addOptionalRule}
-                className="text-sm flex items-center gap-1 text-primary-light hover:underline"
+                className="text-sm flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-medium"
               >
                 <Plus size={16} /> নতুন নিয়ম যোগ করুন
               </button>
@@ -995,7 +995,7 @@ export default function CreateExam() {
                   </button>
                   
                   <div className="mb-4 pr-8">
-                    <label className="block text-sm text-gray-500 mb-1">নিয়মের শিরোনাম (যেমন: গুচ্ছ ঐচ্ছিক বা ৪র্থ বিষয়)</label>
+                    <label className="block text-sm text-gray-600 dark:text-gray-400 mb-1">নিয়মের শিরোনাম (যেমন: গুচ্ছ ঐচ্ছিক বা ৪র্থ বিষয়)</label>
                     <input 
                       type="text" 
                       value={rule.title}
@@ -1004,7 +1004,7 @@ export default function CreateExam() {
                         newRules[ruleIdx].title = e.target.value;
                         setOptionalRules(newRules);
                       }}
-                      className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 bg-white dark:bg-gray-800"
+                      className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 bg-white dark:bg-gray-800 dark:text-white"
                     />
                   </div>
 
@@ -1022,16 +1022,16 @@ export default function CreateExam() {
                               setOptionalRules(newRules);
                             }}
                             placeholder="যেমন: Math + Biology"
-                            className="w-full p-2 text-sm border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                            className="w-full p-2 text-sm border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                           />
                         </div>
                         <div className="flex-1">
-                          <div className="text-xs text-gray-500 mb-1">অন্তর্ভুক্ত বিষয়সমূহ:</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">অন্তর্ভুক্ত বিষয়সমূহ:</div>
                           <div className="flex flex-wrap gap-2">
                             {detectedSubjects.map(subj => (
                               <label key={subj} className="flex items-center gap-1 text-xs cursor-pointer">
                                 <input 
-                                  type="checkbox"
+                                  type="checkbox" 
                                   checked={choice.subjects.includes(subj)}
                                   onChange={(e) => {
                                     const newRules = [...optionalRules];
@@ -1045,7 +1045,7 @@ export default function CreateExam() {
                                   }}
                                   className="accent-primary-light"
                                 />
-                                {subj}
+                                <span>{subj}</span>
                               </label>
                             ))}
                           </div>
@@ -1069,7 +1069,7 @@ export default function CreateExam() {
                         newRules[ruleIdx].choices.push({ label: `Option ${newRules[ruleIdx].choices.length + 1}`, subjects: [] });
                         setOptionalRules(newRules);
                       }}
-                      className="text-xs text-primary-light hover:underline mt-2"
+                      className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-2 font-medium"
                     >
                       + আরও একটি অপশন যোগ করুন
                     </button>
@@ -1088,7 +1088,7 @@ export default function CreateExam() {
         <button 
           type="button"
           onClick={addManualQuestion} 
-          className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-primary-light text-primary-light rounded-xl hover:bg-primary-light/5 transition-colors cursor-pointer group"
+          className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-primary-light dark:border-blue-400/50 text-primary-light dark:text-blue-300 rounded-xl hover:bg-primary-light/5 dark:hover:bg-blue-400/10 transition-colors cursor-pointer group"
         >
           <Plus size={24} className="group-hover:scale-110 transition-transform" />
           <span className="font-bold">ম্যানুয়ালি প্রশ্ন যোগ করুন</span>
@@ -1256,7 +1256,7 @@ export default function CreateExam() {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold flex items-center gap-2">
           <span>প্রশ্ন তালিকা</span>
-          <span className="text-xs bg-primary-light/10 text-primary-light px-2.5 py-0.5 rounded-full font-semibold">
+          <span className="text-xs bg-primary-light/10 dark:bg-blue-400/15 text-primary-light dark:text-blue-300 px-2.5 py-0.5 rounded-full font-semibold">
             {questions.length}টি প্রশ্ন
           </span>
         </h2>
@@ -1285,7 +1285,7 @@ export default function CreateExam() {
             {/* Question Card Header */}
             <div className="flex flex-wrap justify-between items-center gap-2 mb-4 pb-3 border-b border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-2">
-                <span className="w-8 h-8 rounded-lg bg-primary-light/10 text-primary-light font-bold text-sm flex items-center justify-center">
+                <span className="w-8 h-8 rounded-lg bg-primary-light/10 dark:bg-blue-400/15 text-primary-light dark:text-blue-300 font-bold text-sm flex items-center justify-center">
                   {qIndex + 1}
                 </span>
                 <span className="font-bold text-gray-800 dark:text-gray-200">প্রশ্ন {qIndex + 1}</span>
@@ -1487,7 +1487,7 @@ export default function CreateExam() {
           <button
             type="button"
             onClick={addManualQuestion}
-            className="px-6 py-3 bg-white dark:bg-gray-900 border-2 border-dashed border-primary-light text-primary-light hover:bg-primary-light/5 rounded-xl font-bold flex items-center justify-center gap-2 mx-auto transition-all cursor-pointer shadow-xs"
+            className="px-6 py-3 bg-white dark:bg-gray-900 border-2 border-dashed border-primary-light dark:border-blue-400/50 text-primary-light dark:text-blue-300 hover:bg-primary-light/5 dark:hover:bg-blue-400/10 rounded-xl font-bold flex items-center justify-center gap-2 mx-auto transition-all cursor-pointer shadow-xs"
           >
             <Plus size={20} /> আরও একটি প্রশ্ন যোগ করুন (প্রশ্ন {questions.length + 1})
           </button>

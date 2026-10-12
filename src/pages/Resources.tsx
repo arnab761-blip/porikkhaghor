@@ -75,10 +75,10 @@ export default function Resources() {
             <motion.div key={res.id} whileHover={{ y: -4 }} className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col h-full">
               <div className="flex-grow">
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-xs font-medium px-2.5 py-1 bg-primary-light/10 text-primary-light rounded-md">
+                  <span className="text-xs font-semibold px-2.5 py-1 bg-primary-light/10 dark:bg-primary-dark/20 text-primary-light dark:text-primary-dark rounded-md">
                     {res.category || 'সাধারণ'}
                   </span>
-                  <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded">
+                  <span className="text-xs font-semibold px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded">
                     {res.type}
                   </span>
                 </div>

@@ -254,7 +254,7 @@ export default function ExamList() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-heading font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Layers className="text-primary-light" size={28} />
+            <Layers className="text-primary-light dark:text-primary-dark" size={28} />
             {currentPath.length === 0 ? 'পরীক্ষা ও ফোল্ডারসমূহ' : currentPath[currentPath.length - 1]}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
@@ -290,7 +290,7 @@ export default function ExamList() {
               onClick={() => { setViewMode('folder'); setSearchQuery(''); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 viewMode === 'folder' && !searchQuery
-                  ? 'bg-white dark:bg-gray-900 text-primary-light shadow-sm'
+                  ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
                   : 'text-gray-600 dark:text-gray-400'
               }`}
             >
@@ -300,7 +300,7 @@ export default function ExamList() {
               onClick={() => setViewMode('all')}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 viewMode === 'all' || searchQuery
-                  ? 'bg-white dark:bg-gray-900 text-primary-light shadow-sm'
+                  ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
                   : 'text-gray-600 dark:text-gray-400'
               }`}
             >
@@ -314,7 +314,7 @@ export default function ExamList() {
             title="নতুন কোনো পরীক্ষা যোগ হলে রিফ্রেশ করুন"
             className="p-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-500 hover:text-primary-light dark:hover:text-primary-dark transition-all hover:bg-gray-50 dark:hover:bg-gray-800 shrink-0 flex items-center justify-center disabled:opacity-50"
           >
-            <RotateCcw size={16} className={isRefreshing ? 'animate-spin text-primary-light' : ''} />
+            <RotateCcw size={16} className={isRefreshing ? 'animate-spin text-primary-light dark:text-primary-dark' : ''} />
           </button>
         </div>
       </div>
@@ -334,8 +334,8 @@ export default function ExamList() {
 
             <button
               onClick={() => jumpToBreadcrumb(-1)}
-              className={`hover:text-primary-light font-medium transition-colors ${
-                currentPath.length === 0 ? 'text-primary-light font-bold' : ''
+              className={`hover:text-primary-light dark:hover:text-primary-dark font-medium transition-colors ${
+                currentPath.length === 0 ? 'text-primary-light dark:text-primary-dark font-bold' : ''
               }`}
             >
               সকল ফোল্ডার
@@ -346,8 +346,8 @@ export default function ExamList() {
                 <ChevronRight size={14} className="text-gray-400" />
                 <button
                   onClick={() => jumpToBreadcrumb(idx)}
-                  className={`hover:text-primary-light transition-colors ${
-                    idx === currentPath.length - 1 ? 'text-primary-light font-bold' : 'font-medium'
+                  className={`hover:text-primary-light dark:hover:text-primary-dark transition-colors ${
+                    idx === currentPath.length - 1 ? 'text-primary-light dark:text-primary-dark font-bold' : 'font-medium'
                   }`}
                 >
                   {seg}
@@ -373,7 +373,7 @@ export default function ExamList() {
             </h3>
             <button
               onClick={() => setSearchQuery('')}
-              className="text-xs text-primary-light hover:underline"
+              className="text-xs text-primary-light dark:text-primary-dark hover:underline"
             >
               অনুসন্ধান মুছুন
             </button>
@@ -438,12 +438,12 @@ export default function ExamList() {
                     </div>
 
                     {/* Folder Title */}
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white group-hover:text-primary-light transition-colors line-clamp-1 mb-1">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white group-hover:text-primary-light dark:group-hover:text-primary-dark transition-colors line-clamp-1 mb-1">
                       {folder.name}
                     </h3>
 
                     {/* Folder Exams Count */}
-                    <p className="text-xs sm:text-sm font-semibold text-gray-400 dark:text-gray-500">
+                    <p className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-gray-400">
                       {folder.count} Exams
                     </p>
                   </motion.div>
@@ -564,7 +564,7 @@ export default function ExamList() {
 
         {/* SubCategory if present */}
         {exam.subCategory && (
-          <p className="text-xs text-primary-light text-center font-medium mb-3">
+          <p className="text-xs text-primary-light dark:text-primary-dark text-center font-semibold mb-3">
             {exam.subCategory}
           </p>
         )}

@@ -61,11 +61,11 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-block py-1 px-3 rounded-full bg-primary-light/10 text-primary-light dark:bg-primary-dark/20 dark:text-primary-dark text-sm font-semibold mb-6 border border-primary-light/20">
+            <span className="inline-block py-1 px-3 rounded-full bg-primary-light/10 text-primary-light dark:bg-primary-dark/20 dark:text-primary-dark text-sm font-semibold mb-6 border border-primary-light/20 dark:border-primary-dark/30">
               দেশের সেরা অনলাইন এক্সাম প্ল্যাটফর্ম 🎯
             </span>
             <h1 className="text-4xl md:text-6xl font-heading font-bold text-gray-900 dark:text-white leading-tight mb-6">
-              আপনার প্রস্তুতি হোক আরও <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-light to-accent-light">নির্ভুল</span> এবং <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-light to-primary-light">শাণিত</span>
+              আপনার প্রস্তুতি হোক আরও <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-light to-accent-light dark:from-blue-400 dark:to-amber-400">নির্ভুল</span> এবং <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-light to-primary-light dark:from-amber-400 dark:to-blue-400">শাণিত</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
               সঠিক সময়ে সঠিক পরীক্ষা দিন। ভুলগুলো ডায়েরিতে সংরক্ষণ করুন এবং আলোচনার মাধ্যমে নিজের দুর্বলতা দূর করে চূড়ান্ত সাফল্যের জন্য নিজেকে প্রস্তুত করুন।

@@ -139,10 +139,10 @@ export default function MyExams() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-grow">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                      <span className="text-xs font-bold bg-primary-light/10 text-primary-light px-3 py-1 rounded-full">
+                      <span className="text-xs font-bold bg-primary-light/10 dark:bg-primary-dark/20 text-primary-light dark:text-primary-dark px-3 py-1 rounded-full">
                         পরীক্ষা নং {toBengaliNumber(results.length - idx)}
                       </span>
-                      <span className="text-sm text-gray-500 flex items-center gap-1">
+                      <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                         <Calendar size={14} />
                         {formatDate(result.submittedAt)}
                       </span>
