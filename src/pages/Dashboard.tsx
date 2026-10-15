@@ -68,6 +68,14 @@ export default function Dashboard() {
             <p className="text-gray-600 dark:text-gray-400 text-sm">শিক্ষার্থীদের ব্যক্তিগত প্রোফাইল, পরীক্ষার ফলাফল, খাতা এবং পেইড অ্যাক্সেস চেক করুন।</p>
           </Link>
 
+          <Link to="/teacher-doubts" className="group bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all hover:-translate-y-1">
+            <div className="w-12 h-12 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <MessageSquare size={24} />
+            </div>
+            <h3 className="text-xl font-bold mb-2">শিক্ষার্থীদের ডাউট ও প্রশ্নোত্তর</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">বিভিন্ন পরীক্ষায় শিক্ষার্থীদের করা সব ডাউট প্রশ্ন সিরিয়াল আকারে দেখুন এবং উত্তর দিন।</p>
+          </Link>
+
           <Link to="/admin-settings" className="group bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all hover:-translate-y-1">
             <div className="w-12 h-12 bg-gray-500/10 text-gray-600 dark:text-gray-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <Settings size={24} />

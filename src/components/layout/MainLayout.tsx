@@ -40,7 +40,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
                         location.pathname.startsWith('/take-exam') || 
                         location.pathname.startsWith('/result') || 
                         location.pathname.startsWith('/leaderboard');
-  const isProfileActive = ['/dashboard', '/login', '/my-exams', '/my-doubts', '/performance', '/mistakes', '/manage-students', '/manage-packages', '/manage-resources', '/admin-settings', '/create-exam'].some(p => location.pathname.startsWith(p));
+  const isProfileActive = ['/dashboard', '/login', '/my-exams', '/my-doubts', '/teacher-doubts', '/performance', '/mistakes', '/manage-students', '/manage-packages', '/manage-resources', '/admin-settings', '/create-exam'].some(p => location.pathname.startsWith(p));
 
   return (
     <div className="min-h-screen flex flex-col">

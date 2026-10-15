@@ -19,7 +19,7 @@ interface NotificationItem {
 }
 
 export default function NotificationBell() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -192,11 +192,11 @@ export default function NotificationBell() {
             {/* Footer */}
             <div className="p-3 bg-gray-50 dark:bg-gray-800/40 border-t border-gray-100 dark:border-gray-800 text-center">
               <Link
-                to="/my-doubts"
+                to={role === 'owner' || role === 'assistant' ? '/teacher-doubts' : '/my-doubts'}
                 onClick={() => setIsOpen(false)}
                 className="text-xs font-bold text-primary-light dark:text-primary-dark hover:underline block"
               >
-                আমার সকল ডাউট ও প্রশ্ন দেখুন →
+                {role === 'owner' || role === 'assistant' ? 'শিক্ষার্থীদের সব ডাউট দেখুন →' : 'আমার সকল ডাউট ও প্রশ্ন দেখুন →'}
               </Link>
             </div>
           </motion.div>
