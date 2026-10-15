@@ -147,7 +147,12 @@ export default function MistakeBank() {
                 </div>
               )}
 
-              <QuestionDiscussion examId={m.examId} questionIndex={m.questionIndex} />
+              <QuestionDiscussion 
+                examId={m.examId} 
+                questionIndex={m.questionIndex} 
+                examTitle={m.examTitle}
+                questionText={m.questionText}
+              />
             </div>
           ))}
         </div>

@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Link, Navigate } from 'react-router-dom';
-import { BookPlus, List, Users, BarChart3, FileText, Settings, Package } from 'lucide-react';
+import { BookPlus, List, Users, BarChart3, FileText, Settings, Package, MessageSquare } from 'lucide-react';
 export default function Dashboard() {
   const { user, role, loading } = useAuth();
 
@@ -93,6 +93,14 @@ export default function Dashboard() {
             </div>
             <h3 className="text-xl font-bold mb-2">ভুল উত্তরের ডায়েরি</h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm">পরীক্ষায় করা আপনার সব ভুল উত্তর এবং তাদের ব্যাখ্যা একসাথে দেখুন।</p>
+          </Link>
+
+          <Link to="/my-doubts" className="group bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all hover:-translate-y-1">
+            <div className="w-12 h-12 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <MessageSquare size={24} />
+            </div>
+            <h3 className="text-xl font-bold mb-2">আমার প্রশ্ন ও ডাউটসমূহ</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">পরীক্ষায় আপনার জিজ্ঞেস করা সব ডাউট এবং শিক্ষকদের দেওয়া উত্তরগুলো দেখুন।</p>
           </Link>
 
           <Link to="/performance" className="group bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all hover:-translate-y-1">

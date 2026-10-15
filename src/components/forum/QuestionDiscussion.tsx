@@ -10,12 +10,23 @@ interface Comment {
   id: string;
   userId: string;
   userName: string;
+  userRole?: string;
   text: string;
   createdAt: any;
 }
 
-export default function QuestionDiscussion({ examId, questionIndex }: { examId: string, questionIndex: number }) {
-  const { user } = useAuth();
+export default function QuestionDiscussion({ 
+  examId, 
+  questionIndex,
+  examTitle,
+  questionText
+}: { 
+  examId: string;
+  questionIndex: number;
+  examTitle?: string;
+  questionText?: string;
+}) {
+  const { user, role } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -55,14 +66,43 @@ export default function QuestionDiscussion({ examId, questionIndex }: { examId: 
 
     try {
       setIsSubmitting(true);
+      const isTeacher = role === 'owner' || role === 'assistant';
+
       await addDoc(collection(db, 'doubts'), {
         examId,
         questionIndex,
+        examTitle: examTitle || 'পরীক্ষা',
+        questionText: questionText || '',
         userId: user.uid,
-        userName: user.displayName || 'Guest User',
+        userName: user.displayName || (isTeacher ? 'শিক্ষক' : 'শিক্ষার্থী'),
+        userRole: role || 'student',
         text: newComment.trim(),
         createdAt: serverTimestamp()
       });
+
+      // If teacher replies, send notification to students who asked doubts in this question
+      if (isTeacher) {
+        // Find unique student userIds who asked in this question
+        const studentUserIds = Array.from(new Set(
+          comments
+            .filter(c => c.userId && c.userId !== user.uid && c.userRole !== 'owner' && c.userRole !== 'assistant')
+            .map(c => c.userId)
+        ));
+
+        for (const targetUserId of studentUserIds) {
+          await addDoc(collection(db, 'notifications'), {
+            userId: targetUserId,
+            title: 'শিক্ষক আপনার প্রশ্নের উত্তর দিয়েছেন 🎓',
+            message: `"${examTitle || 'পরীক্ষা'}"-এর ${questionIndex + 1} নম্বর প্রশ্নে শিক্ষক আপনার ডাউটের উত্তর দিয়েছেন।`,
+            examId,
+            questionIndex,
+            createdAt: serverTimestamp(),
+            read: false,
+            replyText: newComment.trim()
+          });
+        }
+      }
+
       setNewComment('');
     } catch (error) {
       console.error(error);
@@ -95,14 +135,33 @@ export default function QuestionDiscussion({ examId, questionIndex }: { examId: 
               {comments.length === 0 ? (
                 <p className="text-sm text-gray-400 italic">এখনো কোনো প্রশ্ন বা আলোচনা নেই। প্রথম কমেন্টটি আপনি করুন!</p>
               ) : (
-                comments.map(c => (
-                  <div key={c.id} className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
-                    <span className="font-bold text-xs text-primary-light dark:text-primary-dark">{c.userName}</span>
-                    <p className="text-sm mt-1 text-gray-700 dark:text-gray-300">
-                      <MathText text={c.text} />
-                    </p>
-                  </div>
-                ))
+                comments.map(c => {
+                  const isTeacherComment = c.userRole === 'owner' || c.userRole === 'assistant';
+                  return (
+                    <div 
+                      key={c.id} 
+                      className={`p-3 rounded-xl border transition-all ${
+                        isTeacherComment 
+                          ? 'bg-blue-50/80 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 ring-1 ring-blue-300 dark:ring-blue-700' 
+                          : 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`font-bold text-xs ${isTeacherComment ? 'text-blue-700 dark:text-blue-300 font-bold' : 'text-primary-light dark:text-primary-dark'}`}>
+                          {c.userName}
+                        </span>
+                        {isTeacherComment && (
+                          <span className="text-[10px] bg-blue-600 text-white font-bold px-2 py-0.5 rounded-full">
+                            শিক্ষক
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                        <MathText text={c.text} />
+                      </p>
+                    </div>
+                  );
+                })
               )}
             </div>
 

@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import Footer from './Footer';
 
+import NotificationBell from './NotificationBell';
+
 export default function MainLayout({ children }: { children: ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -38,7 +40,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
                         location.pathname.startsWith('/take-exam') || 
                         location.pathname.startsWith('/result') || 
                         location.pathname.startsWith('/leaderboard');
-  const isProfileActive = ['/dashboard', '/login', '/my-exams', '/performance', '/mistakes', '/manage-students', '/manage-packages', '/manage-resources', '/admin-settings', '/create-exam'].some(p => location.pathname.startsWith(p));
+  const isProfileActive = ['/dashboard', '/login', '/my-exams', '/my-doubts', '/performance', '/mistakes', '/manage-students', '/manage-packages', '/manage-resources', '/admin-settings', '/create-exam'].some(p => location.pathname.startsWith(p));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -58,6 +60,9 @@ export default function MainLayout({ children }: { children: ReactNode }) {
             <button onClick={toggleDarkMode} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
+
+            {/* Notification Bell */}
+            {user && <NotificationBell />}
             
             {user ? (
               <div className="flex items-center gap-4">
@@ -75,11 +80,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
             )}
           </nav>
 
-          {/* Mobile Menu Button */}
-          <div className="flex md:hidden items-center gap-4">
+          {/* Mobile Menu Button & Notification */}
+          <div className="flex md:hidden items-center gap-2 sm:gap-4">
             <button onClick={toggleDarkMode} className="p-2">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
+            {user && <NotificationBell />}
             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -104,6 +110,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
               {user ? (
                 <>
                   <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded text-primary-light dark:text-primary-dark font-medium">ড্যাশবোর্ড</Link>
+                  <Link to="/my-doubts" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded text-primary-light dark:text-primary-dark font-medium">আমার ডাউটসমূহ</Link>
                   <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="text-lg p-2 text-left text-error-light hover:bg-gray-50 dark:hover:bg-gray-800 rounded mt-2">লগআউট</button>
                 </>
               ) : (

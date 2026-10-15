@@ -320,7 +320,12 @@ export default function ExamResult() {
               )}
 
               <div className="ml-9">
-                <QuestionDiscussion examId={resultData.examId} questionIndex={idx} />
+                <QuestionDiscussion 
+                  examId={resultData.examId} 
+                  questionIndex={idx} 
+                  examTitle={examData?.title || resultData.examTitle}
+                  questionText={q.text}
+                />
               </div>
             </div>
           );

@@ -35,6 +35,7 @@ import Packages from './pages/Packages';
 import ManagePackages from './pages/ManagePackages';
 import MyExams from './pages/MyExams';
 import Leaderboard from './pages/Leaderboard';
+import MyDoubts from './pages/MyDoubts';
 
 // Wrapper for AnimatePresence to work with routes
 function AnimatedRoutes() {
@@ -52,6 +53,7 @@ function AnimatedRoutes() {
         <Route path="/result/:resultId" element={<ExamResult />} />
         <Route path="/leaderboard/:examId" element={<Leaderboard />} />
         <Route path="/mistakes" element={<MistakeBank />} />
+        <Route path="/my-doubts" element={<MyDoubts />} />
         <Route path="/resources" element={<Resources />} />
         <Route path="/manage-resources" element={<ManageResources />} />
         <Route path="/manage-packages" element={<ManagePackages />} />
