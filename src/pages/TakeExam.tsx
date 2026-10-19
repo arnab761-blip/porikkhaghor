@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, LayoutGrid, X, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { ADMISSION_PRESETS, isSubjectAllowed } from '../lib/admissionRules';
 import { MathText } from '../components/MathText';
+import { getCorrectAnswerIndex } from '../lib/questionUtils';
 
 interface Question {
   id: string;
@@ -383,10 +384,11 @@ export default function TakeExam() {
     activeQuestions.forEach((q) => {
       // Find the index of this question in the original exam.questions array
       const originalIndex = exam.questions.findIndex(eq => eq.id === q.id);
+      const correctIdx = getCorrectAnswerIndex(q);
       
       if (answers[originalIndex] === undefined) {
         skipped++;
-      } else if (answers[originalIndex] === q.correctAnswer) {
+      } else if (answers[originalIndex] === correctIdx) {
         correct++;
       } else {
         wrong++;

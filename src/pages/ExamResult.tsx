@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -7,6 +7,7 @@ import { CheckCircle2, XCircle, MinusCircle, ArrowRight, Award, Trophy } from 'l
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import QuestionDiscussion from '../components/forum/QuestionDiscussion';
 import { MathText } from '../components/MathText';
+import { getCorrectAnswerIndex } from '../lib/questionUtils';
 
 export default function ExamResult() {
   const { resultId } = useParams();
@@ -126,24 +127,52 @@ export default function ExamResult() {
         ? Number(examData.negativeMarking) 
         : (examData?.admissionPattern === 'du_7college' ? 0 : 0.25));
 
-  let displayScore = Number(stats?.totalScore);
-  let displayOutOf = Number(stats?.outOf);
+  // Dynamically recompute stats using getCorrectAnswerIndex to fix any misgraded questions from past attempts
+  const dynamicStats = useMemo(() => {
+    if (!examData?.questions || !answers) return null;
+    let correct = 0;
+    let wrong = 0;
+    let skipped = 0;
+
+    examData.questions.forEach((q: any, idx: number) => {
+      const uAns = answers[idx];
+      const correctIdx = getCorrectAnswerIndex(q);
+
+      if (uAns === undefined || uAns === null) {
+        skipped++;
+      } else if (uAns === correctIdx) {
+        correct++;
+      } else {
+        wrong++;
+      }
+    });
+
+    const totalScore = Number(((correct * marks) - (wrong * neg)).toFixed(2));
+    const outOf = (examData.questions.length || 1) * marks;
+
+    return { correct, wrong, skipped, totalScore, outOf };
+  }, [examData, answers, marks, neg]);
+
+  const activeStats = dynamicStats || stats || { correct: 0, wrong: 0, skipped: 0, totalScore: 0, outOf: 0 };
+
+  let displayScore = Number(activeStats?.totalScore);
+  let displayOutOf = Number(activeStats?.outOf);
 
   if (Number.isNaN(displayScore)) {
-    const c = Number(stats?.correct) || 0;
-    const w = Number(stats?.wrong) || 0;
+    const c = Number(activeStats?.correct) || 0;
+    const w = Number(activeStats?.wrong) || 0;
     displayScore = Number(((c * marks) - (w * neg)).toFixed(2));
   }
 
   if (Number.isNaN(displayOutOf) || displayOutOf <= 0) {
-    const totalQ = (Number(stats?.correct) || 0) + (Number(stats?.wrong) || 0) + (Number(stats?.skipped) || 0);
+    const totalQ = (Number(activeStats?.correct) || 0) + (Number(activeStats?.wrong) || 0) + (Number(activeStats?.skipped) || 0);
     displayOutOf = (totalQ || examData?.questions?.length || 100) * marks;
   }
 
   const pieData = [
-    { name: 'সঠিক', value: stats.correct, color: '#10B981' }, // Green
-    { name: 'ভুল', value: stats.wrong, color: '#EF4444' }, // Red
-    { name: 'উত্তর দেননি', value: stats.skipped, color: '#9CA3AF' } // Gray
+    { name: 'সঠিক', value: activeStats.correct, color: '#10B981' }, // Green
+    { name: 'ভুল', value: activeStats.wrong, color: '#EF4444' }, // Red
+    { name: 'উত্তর দেননি', value: activeStats.skipped, color: '#9CA3AF' } // Gray
   ];
 
   return (
@@ -232,15 +261,15 @@ export default function ExamResult() {
           <div className="w-1/2 pl-4 space-y-3">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full bg-green-500"></div>
-              <span className="font-medium">{stats.correct} সঠিক</span>
+              <span className="font-medium">{toBengaliNumber(activeStats.correct)} সঠিক</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full bg-red-500"></div>
-              <span className="font-medium">{stats.wrong} ভুল</span>
+              <span className="font-medium">{toBengaliNumber(activeStats.wrong)} ভুল</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full bg-gray-400"></div>
-              <span className="font-medium">{stats.skipped} উত্তর দেননি</span>
+              <span className="font-medium">{toBengaliNumber(activeStats.skipped)} উত্তর দেননি</span>
             </div>
           </div>
         </div>
@@ -274,7 +303,8 @@ export default function ExamResult() {
       <div className="space-y-6">
         {examData.questions.map((q: any, idx: number) => {
           const userAnswer = answers[idx];
-          const isCorrect = userAnswer === q.correctAnswer;
+          const correctIdx = getCorrectAnswerIndex(q);
+          const isCorrect = userAnswer === correctIdx;
           const isSkipped = userAnswer === undefined || userAnswer === null;
 
           // Apply filters
@@ -306,8 +336,8 @@ export default function ExamResult() {
                 {q.options.map((opt: string, optIdx: number) => {
                   let optStyle = "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800";
                   
-                  if (optIdx === q.correctAnswer) {
-                    optStyle = "border-green-500 bg-green-50 dark:bg-green-900/20 ring-1 ring-green-500";
+                  if (optIdx === correctIdx) {
+                    optStyle = "border-green-500 bg-green-50 dark:bg-green-900/20 ring-1 ring-green-500 text-green-800 dark:text-green-200 font-medium";
                   } else if (optIdx === userAnswer && !isCorrect) {
                     optStyle = "border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300";
                   }
@@ -315,7 +345,7 @@ export default function ExamResult() {
                   return (
                     <div key={optIdx} className={`p-3 rounded-xl border ${optStyle} flex justify-between items-center gap-2`}>
                       <span className="flex-1"><MathText text={opt} /></span>
-                      {optIdx === q.correctAnswer && <CheckCircle2 size={18} className="text-green-600 shrink-0" />}
+                      {optIdx === correctIdx && <CheckCircle2 size={18} className="text-green-600 shrink-0" />}
                       {optIdx === userAnswer && !isCorrect && <XCircle size={18} className="text-red-600 shrink-0" />}
                     </div>
                   );

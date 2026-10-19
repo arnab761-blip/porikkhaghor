@@ -7,6 +7,7 @@ import { XCircle, BookOpen, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import QuestionDiscussion from '../components/forum/QuestionDiscussion';
 import { MathText } from '../components/MathText';
+import { getCorrectAnswerIndex } from '../lib/questionUtils';
 
 interface Mistake {
   examId: string;
@@ -56,14 +57,15 @@ export default function MistakeBank() {
             if (examData && examData.questions) {
               examData.questions.forEach((q: any, idx: number) => {
                 const userAnswer = answers[idx];
-                if (userAnswer !== undefined && userAnswer !== q.correctAnswer) {
+                const correctIdx = getCorrectAnswerIndex(q);
+                if (userAnswer !== undefined && userAnswer !== correctIdx) {
                   allMistakes.push({
                     examId,
                     examTitle,
                     questionIndex: idx,
                     questionText: q.text,
                     options: q.options,
-                    correctAnswer: q.correctAnswer,
+                    correctAnswer: correctIdx,
                     userAnswer,
                     explanation: q.explanation
                   });
