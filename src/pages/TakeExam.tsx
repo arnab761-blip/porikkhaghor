@@ -394,7 +394,9 @@ export default function TakeExam() {
     });
 
     const marks = Number(exam.marksPerQuestion) || 1;
-    const neg = exam.negativeMarking !== undefined && !isNaN(Number(exam.negativeMarking)) ? Number(exam.negativeMarking) : 0.25;
+    const neg = (exam.negativeMarking !== undefined && exam.negativeMarking !== null && !isNaN(Number(exam.negativeMarking))) 
+      ? Number(exam.negativeMarking) 
+      : (exam.admissionPattern === 'du_7college' ? 0 : 0.25);
     const totalScore = Number(((correct * marks) - (wrong * neg)).toFixed(2));
     const outOf = (activeQuestions.length || exam.questions.length || 1) * marks;
 
@@ -405,6 +407,8 @@ export default function TakeExam() {
       userName: user?.displayName || user?.email?.split('@')[0] || 'শিক্ষার্থী',
       userEmail: user?.email || '',
       answers,
+      negativeMarking: neg,
+      marksPerQuestion: marks,
       stats: { correct, wrong, skipped, totalScore, outOf },
       submittedAt: serverTimestamp()
     };
@@ -438,6 +442,10 @@ export default function TakeExam() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const currentNeg = (exam.negativeMarking !== undefined && exam.negativeMarking !== null && !isNaN(Number(exam.negativeMarking))) 
+    ? Number(exam.negativeMarking) 
+    : (exam.admissionPattern === 'du_7college' ? 0 : 0.25);
+
   return (
     <div className="max-w-4xl mx-auto pb-24">
       {/* Rule Alert Modal */}
@@ -454,9 +462,25 @@ export default function TakeExam() {
                 <AlertCircle size={32} />
               </div>
               <h2 className="text-2xl font-bold text-center mb-4 text-gray-900 dark:text-white">সতর্কতা!</h2>
-              <p className="text-gray-600 dark:text-gray-400 text-center mb-6 text-lg">
+              <p className="text-gray-600 dark:text-gray-400 text-center mb-4 text-lg">
                 প্রতিটি প্রশ্নের উত্তর মাত্র একবারই দেওয়া যাবে। একবার কোনো অপশন সিলেক্ট করলে তা আর পরিবর্তন করা যাবে না। তাই সাবধানে উত্তর দিন।
               </p>
+
+              {/* Negative Marking Badge Notice */}
+              <div className={`p-3.5 rounded-xl border text-xs sm:text-sm flex items-center justify-between mb-6 ${
+                currentNeg === 0 
+                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-semibold' 
+                  : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 font-medium'
+              }`}>
+                <span>
+                  {currentNeg === 0 
+                    ? '🛡️ নেগেটিভ মার্কিং: এই পরীক্ষায় কোনো নেগেটিভ মার্কিং নেই (০)।' 
+                    : `⚠️ নেগেটিভ মার্কিং: প্রতি ভুল উত্তরের জন্য -${currentNeg} নম্বর কাটা যাবে।`}
+                </span>
+                <span className="text-[11px] opacity-75">
+                  প্রতি প্রশ্নের মান: {exam.marksPerQuestion || 1}
+                </span>
+              </div>
               
               {/* OFFICIAL ADMISSION PRESET SELECTION MODAL */}
               {exam.admissionPattern && exam.admissionPattern !== 'custom' ? (
@@ -473,8 +497,8 @@ export default function TakeExam() {
                     </div>
                   </div>
 
-                  {/* DU A & GST A UNIT */}
-                  {(exam.admissionPattern === 'du_a' || exam.admissionPattern === 'gst_a') && (
+                  {/* DU A, 7 COLLEGE & GST A UNIT */}
+                  {(exam.admissionPattern === 'du_a' || exam.admissionPattern === 'du_7college' || exam.admissionPattern === 'gst_a') && (
                     <div className="space-y-4">
                       {/* Compulsory */}
                       <div className="bg-gray-50 dark:bg-gray-800 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700">
@@ -832,7 +856,16 @@ export default function TakeExam() {
       {/* Sticky Top Bar for Timer and Submission */}
       <div className="sticky top-[64px] z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-4 mb-6 flex justify-between items-center shadow-sm -mx-4 px-4 sm:mx-0 sm:rounded-b-2xl">
         <div>
-          <h2 className="font-bold text-lg hidden sm:block">{exam.title}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-bold text-lg hidden sm:block">{exam.title}</h2>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+              currentNeg === 0 
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' 
+                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+            }`}>
+              {currentNeg === 0 ? 'নেগেটিভ নেই (০)' : `নেগেটিভ -${currentNeg}`}
+            </span>
+          </div>
           <div className="flex gap-2 mt-1">
             <button 
               onClick={() => setViewMode('all')} 

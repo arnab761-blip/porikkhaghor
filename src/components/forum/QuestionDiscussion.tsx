@@ -101,6 +101,18 @@ export default function QuestionDiscussion({
             replyText: newComment.trim()
           });
         }
+      } else {
+        // If student asks doubt, send notification to teacher
+        await addDoc(collection(db, 'notifications'), {
+          forTeacher: true,
+          title: 'নতুন ডাউট প্রশ্ন ❓',
+          message: `${user.displayName || 'একজন শিক্ষার্থী'} "${examTitle || 'পরীক্ষা'}"-এর ${questionIndex + 1} নম্বর প্রশ্নে একটি নতুন ডাউট জিজ্ঞেস করেছে।`,
+          examId,
+          questionIndex,
+          createdAt: serverTimestamp(),
+          read: false,
+          replyText: newComment.trim()
+        });
       }
 
       setNewComment('');

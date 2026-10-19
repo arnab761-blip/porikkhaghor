@@ -664,8 +664,47 @@ export default function CreateExam() {
               <input type="number" value={marksPerQuestion} onChange={e => setMarksPerQuestion(Number(e.target.value))} className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700" />
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">নেগেটিভ মার্কিং</label>
-              <input type="number" step="0.25" value={negativeMarking} onChange={e => setNegativeMarking(Number(e.target.value))} className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700" />
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium">নেগেটিভ মার্কিং</label>
+                <div className="flex gap-1">
+                  {[
+                    { label: '০ (নেই)', val: 0 },
+                    { label: '০.২৫', val: 0.25 },
+                    { label: '০.২', val: 0.2 },
+                    { label: '০.৫', val: 0.5 }
+                  ].map(btn => (
+                    <button
+                      key={btn.val}
+                      type="button"
+                      onClick={() => setNegativeMarking(btn.val)}
+                      className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+                        Number(negativeMarking) === btn.val 
+                          ? 'bg-primary-light text-white font-bold' 
+                          : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {btn.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <input 
+                type="number" 
+                step="0.05" 
+                min="0"
+                value={negativeMarking} 
+                onChange={e => setNegativeMarking(e.target.value === '' ? 0 : Number(e.target.value))} 
+                className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700" 
+              />
+              {Number(negativeMarking) === 0 ? (
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold mt-1">
+                  ✓ কোনো নেগেটিভ মার্কিং নেই (ভুল উত্তরের জন্য নম্বর কাটা যাবে না)।
+                </p>
+              ) : (
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                  ভুল উত্তরের জন্য -{negativeMarking} নম্বর কাটা যাবে।
+                </p>
+              )}
             </div>
           </div>
           <div className="md:col-span-2 flex items-center gap-2 mt-2">
@@ -685,7 +724,7 @@ export default function CreateExam() {
             স্বয়ংক্রিয় সাবজেক্ট রুলস
           </span>
         </div>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           যে বিশ্ববিদ্যালয়ের ভর্তি পরীক্ষার জন্য প্রশ্ন তৈরি করছেন সেটি নির্বাচন করুন। সিস্টেম স্বয়ংক্রিয়ভাবে উক্ত বিশ্ববিদ্যালয়ের অফিশিয়াল বাধ্যবাধকতা ও ঐচ্ছিক সাবজেক্ট লজিক শিক্ষার্থীদের জন্য প্রয়োগ করবে।
         </p>
 
@@ -695,26 +734,34 @@ export default function CreateExam() {
           </label>
           <select
             value={admissionPattern}
-            onChange={(e) => setAdmissionPattern(e.target.value)}
+            onChange={(e) => {
+              const newPat = e.target.value;
+              setAdmissionPattern(newPat);
+              const foundPreset = ADMISSION_PRESETS.find(p => p.id === newPat);
+              if (foundPreset && foundPreset.defaultNegativeMarking !== undefined) {
+                setNegativeMarking(foundPreset.defaultNegativeMarking);
+              }
+            }}
             className="w-full p-3 border-2 border-blue-200 dark:border-blue-900/60 rounded-xl dark:bg-gray-800 dark:text-white font-medium focus:border-blue-500 bg-white"
           >
             <option value="custom">⚙️ কাস্টম নিয়ম (Custom Rules - যেকোনো বিভাগ / সাধারণ পরীক্ষা)</option>
             <optgroup label="🏛️ সাধারণ ও বিজ্ঞান বিশ্ববিদ্যালয়সমূহ">
-              <option value="du_a">১. ঢাকা বিশ্ববিদ্যালয় (ক ইউনিট) ও ৭ কলেজ (বিজ্ঞান)</option>
-              <option value="gst_a">২. গুচ্ছ বিজ্ঞান (GST - এ ইউনিট)</option>
-              <option value="ru_c">৩. রাজশাহী বিশ্ববিদ্যালয় (সি ইউনিট - বিজ্ঞান)</option>
-              <option value="cu_a">৪. চট্টগ্রাম বিশ্ববিদ্যালয় (এ ইউনিট)</option>
-              <option value="ju_a">৫. জাহাঙ্গীরনগর বিশ্ববিদ্যালয় (এ ইউনিট - গাণিতিক ও পদার্থ)</option>
-              <option value="ju_d">৫. জাহাঙ্গীরনগর বিশ্ববিদ্যালয় (ডি ইউনিট - জীববিজ্ঞান অনুষদ)</option>
-              <option value="agri_gst">৯. কৃষি গুচ্ছ (Agri GST)</option>
+              <option value="du_a">১. ঢাকা বিশ্ববিদ্যালয় (ক ইউনিট - বিজ্ঞান)</option>
+              <option value="du_7college">২. ঢাবি অধিভুক্ত সরকারি ৭ কলেজ (বিজ্ঞান - কোনো নেগেটিভ নেই)</option>
+              <option value="gst_a">৩. গুচ্ছ বিজ্ঞান (GST - এ ইউনিট)</option>
+              <option value="ru_c">৪. রাজশাহী বিশ্ববিদ্যালয় (সি ইউনিট - বিজ্ঞান)</option>
+              <option value="cu_a">৫. চট্টগ্রাম বিশ্ববিদ্যালয় (এ ইউনিট)</option>
+              <option value="ju_a">৬. জাহাঙ্গীরনগর বিশ্ববিদ্যালয় (এ ইউনিট - গাণিতিক ও পদার্থ)</option>
+              <option value="ju_d">৭. জাহাঙ্গীরনগর বিশ্ববিদ্যালয় (ডি ইউনিট - জীববিজ্ঞান অনুষদ)</option>
+              <option value="agri_gst">১০. কৃষি গুচ্ছ (Agri GST)</option>
             </optgroup>
             <optgroup label="⚙️ ইঞ্জিনিয়ারিং ও প্রযুক্তি">
-              <option value="buet">৬. বুয়েট (BUET)</option>
-              <option value="ckruet">৬. প্রকৌশল গুচ্ছ (CKRUET - চুয়েট, কুয়েট, রুয়েট)</option>
-              <option value="butex">৭. বাংলাদেশ টেক্সটাইল বিশ্ববিদ্যালয় (BUTEX)</option>
+              <option value="buet">৭. বুয়েট (BUET)</option>
+              <option value="ckruet">৮. প্রকৌশল গুচ্ছ (CKRUET - চুয়েট, কুয়েট, রুয়েট)</option>
+              <option value="butex">৯. বাংলাদেশ টেক্সটাইল বিশ্ববিদ্যালয় (BUTEX)</option>
             </optgroup>
             <optgroup label="🩺 মেডিকেল ও স্বাস্থ্য">
-              <option value="medical">৮. মেডিকেল ও ডেন্টাল ভর্তি পরীক্ষা (MBBS / BDS)</option>
+              <option value="medical">১০. মেডিকেল ও ডেন্টাল ভর্তি পরীক্ষা (MBBS / BDS)</option>
             </optgroup>
           </select>
         </div>
@@ -1226,13 +1273,13 @@ export default function CreateExam() {
                     <td className="p-2.5 font-mono font-semibold text-blue-600 dark:text-blue-400">Option 3 / Option C / 3 / C</td>
                     <td className="p-2.5 font-semibold">অপশন ৩ / অপশন সি / গ</td>
                     <td className="p-2.5 text-gray-600 dark:text-gray-400">৩য় উত্তরের অপশন (Option 3, Option C, গ, অপশন ৩ বা C)</td>
-                    <td className="p-2.5 text-center"><span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">ঐচ্ছিক</span></td>
+                    <td className="p-2.5 text-center"><span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">ঐচ্ছিক</span></td>
                   </tr>
                   <tr>
                     <td className="p-2.5 font-mono font-semibold text-blue-600 dark:text-blue-400">Option 4 / Option D / 4 / D</td>
                     <td className="p-2.5 font-semibold">অপশন ৪ / অপশন ডি / ঘ</td>
                     <td className="p-2.5 text-gray-600 dark:text-gray-400">৪র্থ উত্তরের অপশন (Option 4, Option D, ঘ, অপশন ৪ বা D)</td>
-                    <td className="p-2.5 text-center"><span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">ঐচ্ছিক</span></td>
+                    <td className="p-2.5 text-center"><span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">ঐচ্ছিক</span></td>
                   </tr>
                   <tr className="bg-amber-50/40 dark:bg-amber-950/20">
                     <td className="p-2.5 font-mono font-semibold text-amber-600 dark:text-amber-400">Correct Option / Ans / Answer</td>
@@ -1244,19 +1291,19 @@ export default function CreateExam() {
                     <td className="p-2.5 font-mono font-semibold text-blue-600 dark:text-blue-400">Explanation</td>
                     <td className="p-2.5 font-semibold">ব্যাখ্যা</td>
                     <td className="p-2.5 text-gray-600 dark:text-gray-400">সঠিক উত্তরের ব্যাখ্যা (ছাত্রছাত্রীরা পরীক্ষা শেষে দেখবে)</td>
-                    <td className="p-2.5 text-center"><span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">ঐচ্ছিক</span></td>
+                    <td className="p-2.5 text-center"><span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">ঐচ্ছিক</span></td>
                   </tr>
                   <tr>
                     <td className="p-2.5 font-mono font-semibold text-blue-600 dark:text-blue-400">Subject</td>
                     <td className="p-2.5 font-semibold">বিষয়</td>
                     <td className="p-2.5 text-gray-600 dark:text-gray-400">বিষয়ের নাম (যেমন: Physics, Chemistry, Math)</td>
-                    <td className="p-2.5 text-center"><span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">ঐচ্ছিক</span></td>
+                    <td className="p-2.5 text-center"><span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">ঐচ্ছিক</span></td>
                   </tr>
                   <tr>
                     <td className="p-2.5 font-mono font-semibold text-blue-600 dark:text-blue-400">Tags</td>
                     <td className="p-2.5 font-semibold">ট্যাগ</td>
                     <td className="p-2.5 text-gray-600 dark:text-gray-400">কমা দিয়ে ট্যাগ (যেমন: DU 2023, বোর্ড পরীক্ষা)</td>
-                    <td className="p-2.5 text-center"><span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">ঐচ্ছিক</span></td>
+                    <td className="p-2.5 text-center"><span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full font-medium">ঐচ্ছিক</span></td>
                   </tr>
                 </tbody>
               </table>

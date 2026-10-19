@@ -84,7 +84,7 @@ export default function MistakeBank() {
     fetchMistakes();
   }, [user]);
 
-  if (loading) return <div className="p-8 text-center">লোড হচ্ছে...</div>;
+  if (loading) return <div className="p-8 text-center text-gray-500 dark:text-gray-400">লোড হচ্ছে...</div>;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pb-12">
@@ -115,13 +115,13 @@ export default function MistakeBank() {
                 </Link>
               </div>
 
-              <h3 className="font-medium text-lg mb-4">
+              <h3 className="font-medium text-lg mb-4 text-gray-900 dark:text-white">
                 <MathText text={m.questionText} />
               </h3>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 {m.options.map((opt, optIdx) => {
-                  let optStyle = "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-500";
+                  let optStyle = "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-300";
                   
                   if (optIdx === m.correctAnswer) {
                     optStyle = "border-green-500 bg-green-50 dark:bg-green-900/20 ring-1 ring-green-500 text-green-700 dark:text-green-300 font-medium";

@@ -570,14 +570,23 @@ export default function ExamList() {
         )}
 
         {/* Metadata info */}
-        <div className="flex items-center justify-center gap-5 text-sm text-gray-500 dark:text-gray-400 mb-6">
-          <div className="flex items-center gap-1.5 font-medium">
-            <Clock size={16} className="text-gray-400" />
-            <span>{exam.timeLimit} Minutes</span>
+        <div className="flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-6">
+          <div className="flex items-center gap-1 font-medium">
+            <Clock size={15} className="text-gray-400" />
+            <span>{exam.timeLimit} মি.</span>
           </div>
-          <div className="flex items-center gap-1.5 font-medium">
-            <Award size={16} className="text-gray-400" />
-            <span>{totalMarks} Marks</span>
+          <div className="flex items-center gap-1 font-medium">
+            <Award size={15} className="text-gray-400" />
+            <span>{totalMarks} নম্বর</span>
+          </div>
+          <div className="flex items-center">
+            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+              exam.negativeMarking === 0 
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' 
+                : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
+            }`}>
+              {exam.negativeMarking === 0 ? 'নেগেটিভ নেই (০)' : `নেগেটিভ -${exam.negativeMarking ?? 0.25}`}
+            </span>
           </div>
         </div>
 

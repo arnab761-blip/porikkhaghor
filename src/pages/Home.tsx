@@ -120,7 +120,7 @@ export default function Home() {
               desc: 'যেকোনো প্রশ্নে সন্দেহ থাকলে সরাসরি অন্য ছাত্র বা শিক্ষকের সাথে আলোচনা করুন।',
               color: 'text-green-500',
               bg: 'bg-green-50 dark:bg-green-900/20',
-              link: '/mistakes'
+              link: '/my-doubts'
             },
             {
               icon: <Target size={32} />,

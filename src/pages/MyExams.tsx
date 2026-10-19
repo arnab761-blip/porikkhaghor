@@ -161,12 +161,12 @@ export default function MyExams() {
 
                   <div className="flex items-center gap-6">
                     <div className="text-right">
-                      <p className="text-sm text-gray-500 mb-1 flex items-center justify-end gap-1">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1 flex items-center justify-end gap-1">
                         <Award size={14} /> প্রাপ্ত নম্বর
                       </p>
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">
                         {toBengaliNumber(score)} 
-                        <span className="text-base font-normal text-gray-500"> / {toBengaliNumber(outOf)}</span>
+                        <span className="text-base font-normal text-gray-500 dark:text-gray-400"> / {toBengaliNumber(outOf)}</span>
                       </p>
                     </div>
                     <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover:bg-primary-light group-hover:text-white transition-colors">

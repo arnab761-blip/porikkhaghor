@@ -43,7 +43,7 @@ export default function Resources() {
     r.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) return <div className="p-8 text-center">রিসোর্স লোড হচ্ছে...</div>;
+  if (loading) return <div className="p-8 text-center text-gray-500 dark:text-gray-400">রিসোর্স লোড হচ্ছে...</div>;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-6xl mx-auto pb-12">

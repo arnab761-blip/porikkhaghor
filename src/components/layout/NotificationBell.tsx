@@ -30,10 +30,10 @@ export default function NotificationBell() {
       return;
     }
 
-    const q = query(
-      collection(db, 'notifications'),
-      where('userId', '==', user.uid)
-    );
+    const isTeacher = role === 'owner' || role === 'assistant';
+    const q = isTeacher
+      ? query(collection(db, 'notifications'), where('forTeacher', '==', true))
+      : query(collection(db, 'notifications'), where('userId', '==', user.uid));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const items = snapshot.docs.map(d => ({
@@ -52,7 +52,7 @@ export default function NotificationBell() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, role]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -168,7 +168,7 @@ export default function NotificationBell() {
                         {item.title}
                       </h4>
                       <Link
-                        to="/my-doubts"
+                        to={role === 'owner' || role === 'assistant' ? '/teacher-doubts' : '/my-doubts'}
                         onClick={() => setIsOpen(false)}
                         className="text-xs text-blue-600 dark:text-blue-400 hover:underline shrink-0 flex items-center gap-0.5"
                       >

@@ -235,7 +235,7 @@ export default function ManageStudents() {
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <AlertCircle size={64} className="text-red-500 mb-4" />
         <h2 className="text-2xl font-bold mb-2">অ্যাক্সেস নেই</h2>
-        <p className="text-gray-600">এই পেজটি শুধুমাত্র শিক্ষকদের জন্য।</p>
+        <p className="text-gray-600 dark:text-gray-400">এই পেজটি শুধুমাত্র শিক্ষকদের জন্য।</p>
       </div>
     );
   }

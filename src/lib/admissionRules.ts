@@ -8,6 +8,7 @@ export interface AdmissionPreset {
   optionalSubjects?: string[];
   optionalDisplay?: string[];
   sustWarning?: boolean;
+  defaultNegativeMarking?: number;
 }
 
 export const ADMISSION_PRESETS: AdmissionPreset[] = [
@@ -21,28 +22,41 @@ export const ADMISSION_PRESETS: AdmissionPreset[] = [
   },
   {
     id: 'du_a',
-    name: '১. ঢাকা বিশ্ববিদ্যালয় (ক ইউনিট) ও ৭ কলেজ (বিজ্ঞান)',
+    name: '১. ঢাকা বিশ্ববিদ্যালয় (ক ইউনিট - বিজ্ঞান)',
     group: 'science',
-    description: 'মোট ৪টি বিষয়ের উত্তর করতে হবে। পদার্থ ও রসায়ন বাধ্যতামূলক। গণিত ও জীববিজ্ঞানের মধ্যে ৪র্থ বিষয়ের পরিবর্তে বাংলা অথবা ইংরেজি যেকোনো একটি নির্বাচন করা যাবে।',
-    compulsorySubjects: ['physics', 'chemistry'],
-    compulsoryDisplay: ['পদার্থবিজ্ঞান (Physics)', 'রসায়ন (Chemistry)'],
-    optionalSubjects: ['math', 'biology', 'bangla', 'english'],
-    optionalDisplay: ['উচ্চতর গণিত', 'জীববিজ্ঞান', 'বাংলা (বিকল্প)', 'ইংরেজি (বিকল্প)']
-  },
-  {
-    id: 'gst_a',
-    name: '২. গুচ্ছ বিজ্ঞান (GST - এ ইউনিট)',
-    group: 'science',
-    description: 'পদার্থ ও রসায়ন বাধ্যতামূলক। ৪র্থ বিষয়ের পরিবর্তে বাংলা বা ইংরেজি নির্বাচন করা যাবে। সাথে সাস্টের বিশেষ সতর্কবার্তা প্রদর্শিত হবে।',
+    description: 'মোট ৪টি বিষয়ের উত্তর করতে হবে। পদার্থ ও রসায়ন বাধ্যতামূলক। গণিত ও জীববিজ্ঞানের মধ্যে ৪র্থ বিষয়ের পরিবর্তে বাংলা অথবা ইংরেজি যেকোনো একটি নির্বাচন করা যাবে। (নেগেটিভ মার্কিং: ০.২৫)',
     compulsorySubjects: ['physics', 'chemistry'],
     compulsoryDisplay: ['পদার্থবিজ্ঞান (Physics)', 'রসায়ন (Chemistry)'],
     optionalSubjects: ['math', 'biology', 'bangla', 'english'],
     optionalDisplay: ['উচ্চতর গণিত', 'জীববিজ্ঞান', 'বাংলা (বিকল্প)', 'ইংরেজি (বিকল্প)'],
-    sustWarning: true
+    defaultNegativeMarking: 0.25
+  },
+  {
+    id: 'du_7college',
+    name: '২. ঢাবি অধিভুক্ত সরকারি ৭ কলেজ (বিজ্ঞান - কোনো নেগেটিভ মার্কিং নেই)',
+    group: 'science',
+    description: 'মোট ৪টি বিষয়ের উত্তর করতে হবে। পদার্থ ও রসায়ন বাধ্যতামূলক। গণিত ও জীববিজ্ঞানের মধ্যে ৪র্থ বিষয়ের পরিবর্তে বাংলা অথবা ইংরেজি নেওয়া যাবে। ঢাকা ৭ কলেজ ভর্তি পরীক্ষায় কোনো নেগেটিভ মার্কিং নেই (নেগেটিভ মার্কিং = ০)।',
+    compulsorySubjects: ['physics', 'chemistry'],
+    compulsoryDisplay: ['পদার্থবিজ্ঞান (Physics)', 'রসায়ন (Chemistry)'],
+    optionalSubjects: ['math', 'biology', 'bangla', 'english'],
+    optionalDisplay: ['উচ্চতর গণিত', 'জীববিজ্ঞান', 'বাংলা (বিকল্প)', 'ইংরেজি (বিকল্প)'],
+    defaultNegativeMarking: 0
+  },
+  {
+    id: 'gst_a',
+    name: '৩. গুচ্ছ বিজ্ঞান (GST - এ ইউনিট)',
+    group: 'science',
+    description: 'পদার্থ ও রসায়ন বাধ্যতামূলক। ৪র্থ বিষয়ের পরিবর্তে বাংলা বা ইংরেজি নির্বাচন করা যাবে। সাথে সাস্টের বিশেষ সতর্কবার্তা প্রদর্শিত হবে। (নেগেটিভ মার্কিং: ০.২৫)',
+    compulsorySubjects: ['physics', 'chemistry'],
+    compulsoryDisplay: ['পদার্থবিজ্ঞান (Physics)', 'রসায়ন (Chemistry)'],
+    optionalSubjects: ['math', 'biology', 'bangla', 'english'],
+    optionalDisplay: ['উচ্চতর গণিত', 'জীববিজ্ঞান', 'বাংলা (বিকল্প)', 'ইংরেজি (বিকল্প)'],
+    sustWarning: true,
+    defaultNegativeMarking: 0.25
   },
   {
     id: 'ru_c',
-    name: '৩. রাজশাহী বিশ্ববিদ্যালয় (সি ইউনিট - বিজ্ঞান)',
+    name: '৪. রাজশাহী বিশ্ববিদ্যালয় (সি ইউনিট - বিজ্ঞান)',
     group: 'science',
     description: 'পদার্থবিজ্ঞান, রসায়ন এবং আইসিটি বাধ্যতামূলক। ঐচ্ছিক ৩টি ব্লকের যেকোনো ১টি রেডিও বাটন সিলেক্ট করতে হবে (১. শুধুমাত্র গণিত, ২. শুধুমাত্র জীববিজ্ঞান, ৩. গণিত + জীববিজ্ঞান)। কোনো ভাষা বিকল্প থাকবে না।',
     compulsorySubjects: ['physics', 'chemistry', 'ict'],

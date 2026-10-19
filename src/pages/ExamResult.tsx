@@ -119,8 +119,12 @@ export default function ExamResult() {
     return num.toString().replace(/\d/g, (d) => bengaliDigits[parseInt(d)]);
   };
 
-  const marks = Number(examData?.marksPerQuestion) || 1;
-  const neg = examData?.negativeMarking !== undefined && !isNaN(Number(examData.negativeMarking)) ? Number(examData.negativeMarking) : 0.25;
+  const marks = Number(resultData?.marksPerQuestion) || Number(examData?.marksPerQuestion) || 1;
+  const neg = (resultData?.negativeMarking !== undefined && resultData?.negativeMarking !== null)
+    ? Number(resultData.negativeMarking)
+    : (examData?.negativeMarking !== undefined && examData?.negativeMarking !== null && !isNaN(Number(examData.negativeMarking)) 
+        ? Number(examData.negativeMarking) 
+        : (examData?.admissionPattern === 'du_7college' ? 0 : 0.25));
 
   let displayScore = Number(stats?.totalScore);
   let displayOutOf = Number(stats?.outOf);
@@ -188,12 +192,18 @@ export default function ExamResult() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
         {/* Score Card */}
         <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 text-center flex flex-col justify-center">
-          <h2 className="text-lg text-gray-500 mb-2">আপনার প্রাপ্ত নম্বর</h2>
+          <h2 className="text-lg text-gray-500 dark:text-gray-400 mb-2">আপনার প্রাপ্ত নম্বর</h2>
           <div className="text-6xl font-bold text-accent-light dark:text-accent-dark">
             {toBengaliNumber(displayScore)} <span className="text-2xl text-gray-400 font-normal">/ {toBengaliNumber(displayOutOf)}</span>
           </div>
-          <p className="mt-4 text-sm text-gray-500">
-            {stats.wrong > 0 && `(নেগেটিভ মার্কিংয়ের জন্য নম্বর কাটা গেছে)`}
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+            {neg > 0 ? (
+              stats.wrong > 0 
+                ? `(নেগেটিভ মার্কিংয়ের জন্য -${toBengaliNumber((stats.wrong * neg).toFixed(2))} নম্বর কাটা গেছে)` 
+                : '(কোনো নেগেটিভ মার্কিং কাটা যায়নি)'
+            ) : (
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">🎉 এই পরীক্ষায় কোনো নেগেটিভ মার্কিং ছিল না!</span>
+            )}
           </p>
         </div>
 

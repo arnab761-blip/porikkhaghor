@@ -401,14 +401,14 @@ export default function Leaderboard() {
                       </td>
 
                       {/* Correct / Wrong */}
-                      <td className="py-4 text-center hidden md:table-cell text-xs">
-                        <span className="text-green-600 font-medium">{toBengaliNumber(item.stats?.correct)} সঠিক</span>
+                      <td className="py-4 text-center hidden md:table-cell text-xs whitespace-nowrap leading-normal">
+                        <span className="text-green-600 font-semibold inline-block">{toBengaliNumber(item.stats?.correct)} সঠিক</span>
                         <span className="text-gray-300 dark:text-gray-700 mx-1.5">|</span>
-                        <span className="text-red-500 font-medium">{toBengaliNumber(item.stats?.wrong)} ভুল</span>
+                        <span className="text-red-500 font-semibold inline-block">{toBengaliNumber(item.stats?.wrong)} ভুল</span>
                       </td>
 
                       {/* Submitted At */}
-                      <td className="py-4 text-right hidden sm:table-cell text-xs text-gray-500">
+                      <td className="py-4 text-right hidden sm:table-cell text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                         {formattedTime}
                       </td>
 

@@ -11,7 +11,7 @@ import NotificationBell from './NotificationBell';
 export default function MainLayout({ children }: { children: ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, role, logout } = useAuth();
 
   // Initialize dark mode from localStorage or system preference
   useEffect(() => {
@@ -110,7 +110,21 @@ export default function MainLayout({ children }: { children: ReactNode }) {
               {user ? (
                 <>
                   <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded text-primary-light dark:text-primary-dark font-medium">ড্যাশবোর্ড</Link>
-                  <Link to="/my-doubts" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded text-primary-light dark:text-primary-dark font-medium">আমার ডাউটসমূহ</Link>
+                  {role === 'owner' || role === 'assistant' ? (
+                    <>
+                      <Link to="/create-exam" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded text-primary-light dark:text-primary-dark font-medium">নতুন পরীক্ষা তৈরি</Link>
+                      <Link to="/teacher-doubts" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded text-primary-light dark:text-primary-dark font-medium">ডাউট সমাধান (শিক্ষক)</Link>
+                      <Link to="/manage-packages" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded text-primary-light dark:text-primary-dark font-medium">প্যাকেজ ও কোর্স পরিচালনা</Link>
+                      <Link to="/manage-students" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded text-primary-light dark:text-primary-dark font-medium">শিক্ষার্থী ও ফলাফল</Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link to="/my-exams" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded text-primary-light dark:text-primary-dark font-medium">আমার পরীক্ষাগুলো</Link>
+                      <Link to="/mistakes" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded text-primary-light dark:text-primary-dark font-medium">ভুল উত্তরের ডায়েরি</Link>
+                      <Link to="/my-doubts" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded text-primary-light dark:text-primary-dark font-medium">আমার ডাউটসমূহ</Link>
+                      <Link to="/performance" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded text-primary-light dark:text-primary-dark font-medium">পারফরম্যান্স</Link>
+                    </>
+                  )}
                   <button onClick={() => { logout(); setIsMobileMenuOpen(false); }} className="text-lg p-2 text-left text-error-light hover:bg-gray-50 dark:hover:bg-gray-800 rounded mt-2">লগআউট</button>
                 </>
               ) : (
