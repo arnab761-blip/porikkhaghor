@@ -24,7 +24,7 @@ export function getCorrectAnswerIndex(q: {
   const rawAns = q.correctAnswer;
 
   // 1. Direct valid 0-based or 1-based integer
-  if (typeof rawAns === 'number' && Number.isInteger(rawAns)) {
+  if (typeof rawAns === 'number' && Number.isInteger(rawAns) && !isNaN(rawAns)) {
     // Standard 0-based index: 0 <= rawAns < numOptions
     if (rawAns >= 0 && rawAns < numOptions) {
       return rawAns;
@@ -37,23 +37,29 @@ export function getCorrectAnswerIndex(q: {
 
   // Helper to normalize text (strip LaTeX symbols, punctuation, spaces, option labels)
   const normalize = (txt: string) => txt
-    .replace(/^(?:\([কখগঘঙচabcdABCD1-6]\)|[কখগঘঙচabcdABCD1-6]\))\s*/, '')
+    .replace(/^(?:[\[\(\{]*(?:[কখগঘঙচabcdABCD1-6])[\]\)\}]+)\s*/, '')
     .replace(/[\$\s\\\{\}\(\)\[\]\_\^\,\.\:\-\=\+]/g, '')
     .toLowerCase();
 
+  const isValidRaw = rawAns !== undefined && 
+                     rawAns !== null && 
+                     !(typeof rawAns === 'number' && isNaN(rawAns)) && 
+                     String(rawAns).trim() !== '' && 
+                     String(rawAns).trim().toLowerCase() !== 'nan' && 
+                     String(rawAns).trim().toLowerCase() !== 'null';
+
   // 2. If rawAns is string or can be converted to string
-  if (rawAns !== undefined && rawAns !== null && String(rawAns).trim() !== '') {
+  if (isValidRaw) {
     const rawStr = String(rawAns).trim();
 
     // 2a. Direct exact match with options text
     const directIdx = opts.findIndex(opt => opt.trim().toLowerCase() === rawStr.toLowerCase());
     if (directIdx !== -1) return directIdx;
 
-    // 2b. Clean string (strip prefixes like Option, Ans, brackets, spaces, colons)
+    // 2b. Clean string (strip prefixes like Option, Ans, all brackets, spaces, colons)
     const clean = rawStr
       .replace(/^(option|opt|অপশন|answer|ans|উত্তর|সঠিক উত্তর|সঠিক অপশন|সঠিক)\s*[\:\-\.]?\s*/i, '')
-      .replace(/^[\(\[\{]/, '')
-      .replace(/[\)\]\}\.\:\#\s]/g, '')
+      .replace(/[\[\(\{\]\)\}\.\:\#\s]/g, '')
       .trim()
       .toLowerCase();
 
@@ -90,17 +96,22 @@ export function getCorrectAnswerIndex(q: {
       });
       if (matchIdx !== -1) return matchIdx;
     }
-  }
 
-  // 3. Check if options start with (ক), (খ), (গ), (ঘ) and rawAns is or contains corresponding letter
-  if (rawAns !== undefined && rawAns !== null) {
-    const rawLower = String(rawAns).toLowerCase().trim();
+    // 3. Check if options start with (ক), (খ), (গ), (ঘ) and clean or rawLower contains corresponding letter
+    const rawLower = rawStr.toLowerCase();
     const letters = ['ক', 'খ', 'গ', 'ঘ', 'ঙ', 'চ'];
     const engLetters = ['a', 'b', 'c', 'd', 'e', 'f'];
     for (let i = 0; i < opts.length; i++) {
       const optClean = opts[i].trim().toLowerCase();
-      if (optClean.startsWith(`(${letters[i]})`) || optClean.startsWith(`${letters[i]})`) || optClean.startsWith(`(${engLetters[i]})`) || optClean.startsWith(`${engLetters[i]})`)) {
-        if (rawLower.includes(letters[i]) || rawLower.includes(engLetters[i])) {
+      if (
+        optClean.startsWith(`(${letters[i]})`) || 
+        optClean.startsWith(`${letters[i]})`) || 
+        optClean.startsWith(`[${letters[i]}]`) ||
+        optClean.startsWith(`(${engLetters[i]})`) || 
+        optClean.startsWith(`${engLetters[i]})`) ||
+        optClean.startsWith(`[${engLetters[i]}]`)
+      ) {
+        if (clean === letters[i] || clean === engLetters[i] || rawLower.includes(letters[i]) || rawLower.includes(engLetters[i])) {
           return i;
         }
       }
