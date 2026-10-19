@@ -143,27 +143,60 @@ export default function CreateExam() {
         return '';
       };
 
-      // Helper to resolve 1/2/3/4, A/B/C/D, ক/খ/গ/ঘ, Option A, অপশন ক, etc. to 0-based index
-      const parseCorrectAnswer = (rawAns: string): number => {
-        if (!rawAns) return 0;
-        const clean = rawAns.toString().trim().toLowerCase()
-          .replace(/^(option|opt|অপশন)\s*[\:\-\.]?\s*/i, '')
-          .replace(/[\(\)\.\:\#\s]/g, '')
-          .trim();
-        
-        // 1st option: 1, ১, a, এ, ক, first, এক, প্রথম
-        if (clean === '1' || clean === '১' || clean === 'a' || clean === 'এ' || clean === 'ক' || clean === 'এক' || clean === 'প্রথম') return 0;
-        // 2nd option: 2, ২, b, বি, খ, second, দুই, দ্বিতীয়
-        if (clean === '2' || clean === '২' || clean === 'b' || clean === 'বি' || clean === 'খ' || clean === 'দুই' || clean === 'দ্বিতীয়') return 1;
-        // 3rd option: 3, ৩, c, সি, গ, third, তিন, তৃতীয়
-        if (clean === '3' || clean === '৩' || clean === 'c' || clean === 'সি' || clean === 'গ' || clean === 'তিন' || clean === 'তৃতীয়') return 2;
-        // 4th option: 4, ৪, d, ডি, ঘ, fourth, চার, চতুর্থ
-        if (clean === '4' || clean === '৪' || clean === 'd' || clean === 'ডি' || clean === 'ঘ' || clean === 'চার' || clean === 'চতুর্থ') return 3;
+      // Helper to resolve 1/2/3/4, A/B/C/D, ক/খ/গ/ঘ, Option A, অপশন ক, রোমান বা সরাসরি অপশনের লেখার সাথে মিলিয়ে 0-based index বের করা
+      const parseCorrectAnswer = (rawAns: string, optionsList?: string[]): number => {
+        if (!rawAns && rawAns !== '0') return 0;
+        const str = rawAns.toString().trim();
 
-        const parsed = parseInt(clean, 10);
+        // 1. Check exact match with options text if options provided
+        if (optionsList && optionsList.length > 0) {
+          const directIdx = optionsList.findIndex(opt => opt.trim().toLowerCase() === str.toLowerCase());
+          if (directIdx !== -1) return directIdx;
+        }
+
+        // Clean prefix like 'Option A', 'অপশন ১', 'Ans: B', 'উত্তর: ক', brackets, dots, colons
+        const clean = str
+          .replace(/^(option|opt|অপশন|answer|ans|উত্তর|সঠিক উত্তর)\s*[\:\-\.]?\s*/i, '')
+          .replace(/^[\(\[\{]/, '')
+          .replace(/[\)\]\}\.\:\#\s]/g, '')
+          .trim()
+          .toLowerCase();
+        
+        // 1st option: 1, ১, a, A, এ, ক, i, first, এক, প্রথম
+        if (clean === '1' || clean === '১' || clean === 'a' || clean === 'এ' || clean === 'ক' || clean === 'i' || clean === 'first' || clean === 'এক' || clean === 'প্রথম') return 0;
+        
+        // 2nd option: 2, ২, b, B, বি, খ, ii, second, দুই, দ্বিতীয়
+        if (clean === '2' || clean === '২' || clean === 'b' || clean === 'বি' || clean === 'খ' || clean === 'ii' || clean === 'second' || clean === 'দুই' || clean === 'দ্বিতীয়') return 1;
+        
+        // 3rd option: 3, ৩, c, C, সি, গ, iii, third, তিন, তৃতীয়
+        if (clean === '3' || clean === '৩' || clean === 'c' || clean === 'সি' || clean === 'গ' || clean === 'iii' || clean === 'third' || clean === 'তিন' || clean === 'তৃতীয়') return 2;
+        
+        // 4th option: 4, ৪, d, D, ডি, ঘ, iv, fourth, চার, চতুর্থ
+        if (clean === '4' || clean === '৪' || clean === 'd' || clean === 'ডি' || clean === 'ঘ' || clean === 'iv' || clean === 'fourth' || clean === 'চার' || clean === 'চতুর্থ') return 3;
+
+        // 5th option: 5, ৫, e, E, ই, ঙ, v, fifth, পাঁচ, পঞ্চম
+        if (clean === '5' || clean === '৫' || clean === 'e' || clean === 'ই' || clean === 'ঙ' || clean === 'v' || clean === 'fifth' || clean === 'পাঁচ' || clean === 'পঞ্চম') return 4;
+
+        // 6th option: 6, ৬, f, F, এফ, চ, vi, sixth, ছয়, ষষ্ঠ
+        if (clean === '6' || clean === '৬' || clean === 'f' || clean === 'এফ' || clean === 'চ' || clean === 'vi' || clean === 'sixth' || clean === 'ছয়' || clean === 'ষষ্ঠ') return 5;
+
+        // Bengali number to English digit mapping fallback
+        const bnToEnMap: Record<string, string> = { '১': '1', '২': '2', '৩': '3', '৪': '4', '৫': '5', '৬': '6' };
+        const converted = clean.replace(/[১২৩৪৫৬]/g, d => bnToEnMap[d] || d);
+        const parsed = parseInt(converted, 10);
         if (!isNaN(parsed) && parsed >= 1 && parsed <= 6) {
           return parsed - 1;
         }
+
+        // Secondary partial check with options text
+        if (optionsList && optionsList.length > 0) {
+          const matchIdx = optionsList.findIndex(opt => {
+            const cleanOpt = opt.trim().toLowerCase();
+            return cleanOpt === clean || cleanOpt.includes(clean) || clean.includes(cleanOpt);
+          });
+          if (matchIdx !== -1) return matchIdx;
+        }
+
         return 0;
       };
 
@@ -189,7 +222,7 @@ export default function CreateExam() {
         ]);
 
         const rawAns = getRowValue(row, [
-          'Correct Option', 'Correct Answer', 'Correct', 'Answer', 'Ans', 'সঠিক উত্তর', 'উত্তর', 'সঠিক অপশন', 'সঠিক', 'CorrectOption', 'CorrectAns'
+          'Correct Option', 'Correct Answer', 'Correct', 'Answer', 'Ans', 'সঠিক উত্তর', 'উত্তর', 'সঠিক অপশন', 'সঠিক', 'CorrectOption', 'CorrectAns', 'Right Option', 'Right Answer'
         ]);
 
         const rawExp = getRowValue(row, [
@@ -204,11 +237,13 @@ export default function CreateExam() {
           'Subject', 'বিষয়', 'সাবজেক্ট', 'Section', 'বিভাগ'
         ]);
 
+        const resolvedOptions = [opt1, opt2, opt3, opt4].filter(o => o !== '');
+
         return {
           id: Date.now().toString() + index,
           text: rawText,
-          options: [opt1, opt2, opt3, opt4].filter(o => o !== ''),
-          correctAnswer: parseCorrectAnswer(rawAns),
+          options: resolvedOptions,
+          correctAnswer: parseCorrectAnswer(rawAns, resolvedOptions),
           explanation: rawExp,
           tags: rawTags,
           subject: rawSubj

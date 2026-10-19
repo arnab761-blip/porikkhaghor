@@ -14,7 +14,9 @@ import {
   Image as ImageIcon, 
   Edit3, 
   X, 
-  Eye 
+  Eye,
+  FileText,
+  BookOpen
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { formatImageUrl } from '../lib/imageUtils';
@@ -26,6 +28,21 @@ interface CoursePackage {
   price: number;
   features: string[];
   imageUrl?: string;
+  includedExams?: string[];
+  includedResources?: string[];
+}
+
+interface ExamOption {
+  id: string;
+  title: string;
+  category?: string;
+}
+
+interface ResourceOption {
+  id: string;
+  title: string;
+  type?: string;
+  category?: string;
 }
 
 export default function ManagePackages() {
@@ -33,6 +50,9 @@ export default function ManagePackages() {
   const navigate = useNavigate();
 
   const [packages, setPackages] = useState<CoursePackage[]>([]);
+  const [availableExams, setAvailableExams] = useState<ExamOption[]>([]);
+  const [availableResources, setAvailableResources] = useState<ResourceOption[]>([]);
+  
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -44,6 +64,9 @@ export default function ManagePackages() {
     'প্রতিটি প্রশ্নের বিস্তারিত সমাধান ও ব্যাখ্যা',
     'ভুল উত্তরের ডায়েরি ও রিভিশন সুবিধা'
   ]);
+  const [includedExams, setIncludedExams] = useState<string[]>([]);
+  const [includedResources, setIncludedResources] = useState<string[]>([]);
+
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -53,6 +76,7 @@ export default function ManagePackages() {
       return;
     }
     fetchPackages();
+    fetchExamsAndResources();
   }, [role, navigate]);
 
   const fetchPackages = async () => {
@@ -69,6 +93,31 @@ export default function ManagePackages() {
     }
   };
 
+  const fetchExamsAndResources = async () => {
+    try {
+      // Fetch exams
+      const examSnap = await getDocs(collection(db, 'exams'));
+      const examList = examSnap.docs.map(d => ({
+        id: d.id,
+        title: d.data().title,
+        category: d.data().category
+      })) as ExamOption[];
+      setAvailableExams(examList);
+
+      // Fetch resources
+      const resSnap = await getDocs(collection(db, 'resources'));
+      const resList = resSnap.docs.map(d => ({
+        id: d.id,
+        title: d.data().title,
+        type: d.data().type,
+        category: d.data().category
+      })) as ResourceOption[];
+      setAvailableResources(resList);
+    } catch (e) {
+      console.error("Error fetching exams or resources:", e);
+    }
+  };
+
   const handleStartEdit = (pkg: CoursePackage) => {
     setEditingId(pkg.id);
     setTitle(pkg.title);
@@ -80,6 +129,8 @@ export default function ManagePackages() {
       'প্রতিটি প্রশ্নের বিস্তারিত সমাধান ও ব্যাখ্যা',
       'ভুল উত্তরের ডায়েরি ও রিভিশন সুবিধা'
     ]);
+    setIncludedExams(pkg.includedExams || []);
+    setIncludedResources(pkg.includedResources || []);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -94,6 +145,8 @@ export default function ManagePackages() {
       'প্রতিটি প্রশ্নের বিস্তারিত সমাধান ও ব্যাখ্যা',
       'ভুল উত্তরের ডায়েরি ও রিভিশন সুবিধা'
     ]);
+    setIncludedExams([]);
+    setIncludedResources([]);
   };
 
   const handleAddFeature = () => {
@@ -112,6 +165,18 @@ export default function ManagePackages() {
     }
   };
 
+  const toggleIncludedExam = (examId: string) => {
+    setIncludedExams(prev => 
+      prev.includes(examId) ? prev.filter(id => id !== examId) : [...prev, examId]
+    );
+  };
+
+  const toggleIncludedResource = (resourceId: string) => {
+    setIncludedResources(prev => 
+      prev.includes(resourceId) ? prev.filter(id => id !== resourceId) : [...prev, resourceId]
+    );
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || price === '' || features.length === 0) {
@@ -127,16 +192,18 @@ export default function ManagePackages() {
         price: Number(price) || 0,
         imageUrl: imageUrl.trim(),
         features,
+        includedExams: includedExams || [],
+        includedResources: includedResources || [],
       };
 
       if (editingId) {
         pkgData.updatedAt = serverTimestamp();
         await updateDoc(doc(db, 'packages', editingId), pkgData);
-        alert('প্যাকেজটি সফলভাবে আপডেট ও ছবি সংরক্ষণ করা হয়েছে!');
+        alert('প্যাকেজটি সফলভাবে আপডেট ও আনলক আইটেম সংরক্ষণ করা হয়েছে!');
       } else {
         pkgData.createdAt = serverTimestamp();
         await addDoc(collection(db, 'packages'), pkgData);
-        alert('প্যাকেজ সফলভাবে তৈরি হয়েছে! শিক্ষার্থীরা এখন প্যাকেজ পেজে এটি দেখতে পাবে।');
+        alert('প্যাকেজ সফলভাবে তৈরি হয়েছে! শিক্ষার্থীরা এখন প্যাকেজ পেজে এটি ও অন্তর্ভুক্ত রিসোর্স/পরীক্ষা দেখতে পাবে।');
       }
 
       handleCancelEdit();
@@ -395,6 +462,100 @@ export default function ManagePackages() {
             </div>
           </div>
 
+          {/* INCLUDED EXAMS SELECTOR */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <BookOpen size={18} className="text-primary-light dark:text-primary-dark" />
+                এই প্যাকেজে অন্তর্ভুক্ত পরীক্ষা সমূহ ({includedExams.length}টি নির্বাচিত)
+              </span>
+              <span className="text-xs font-normal text-gray-500">
+                শিক্ষার্থী প্যাকেজ কিনলে এই পরীক্ষাগুলো আনলক হবে
+              </span>
+            </label>
+            <div className="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 max-h-56 overflow-y-auto space-y-2">
+              {availableExams.length === 0 ? (
+                <p className="text-xs text-gray-400 py-2">কোনো পরীক্ষা তৈরি করা নেই।</p>
+              ) : (
+                availableExams.map(ex => {
+                  const isChecked = includedExams.includes(ex.id);
+                  return (
+                    <label 
+                      key={ex.id}
+                      onClick={() => toggleIncludedExam(ex.id)}
+                      className={`flex items-center justify-between p-2.5 rounded-xl border text-sm cursor-pointer transition-all ${
+                        isChecked 
+                          ? 'bg-primary-light/10 dark:bg-primary-dark/20 border-primary-light/40 dark:border-primary-dark/40 font-semibold' 
+                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <input 
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {}}
+                          className="w-4 h-4 rounded text-primary-light focus:ring-primary-light pointer-events-none"
+                        />
+                        <span className="text-gray-900 dark:text-white line-clamp-1">{ex.title}</span>
+                      </div>
+                      {ex.category && (
+                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 shrink-0">
+                          {ex.category}
+                        </span>
+                      )}
+                    </label>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* INCLUDED RESOURCES SELECTOR */}
+          <div>
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <FileText size={18} className="text-accent-light dark:text-accent-dark" />
+                এই প্যাকেজে অন্তর্ভুক্ত রিসোর্স ও লেকচার শিট ({includedResources.length}টি নির্বাচিত)
+              </span>
+              <span className="text-xs font-normal text-gray-500">
+                শিক্ষার্থী প্যাকেজ কিনলে এই রিসোর্সগুলো ফ্রি/আনলক পাবে
+              </span>
+            </label>
+            <div className="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 max-h-56 overflow-y-auto space-y-2">
+              {availableResources.length === 0 ? (
+                <p className="text-xs text-gray-400 py-2">কোনো রিসোর্স আপলোড করা নেই।</p>
+              ) : (
+                availableResources.map(res => {
+                  const isChecked = includedResources.includes(res.id);
+                  return (
+                    <label 
+                      key={res.id}
+                      onClick={() => toggleIncludedResource(res.id)}
+                      className={`flex items-center justify-between p-2.5 rounded-xl border text-sm cursor-pointer transition-all ${
+                        isChecked 
+                          ? 'bg-accent-light/10 dark:bg-accent-dark/20 border-accent-light/40 dark:border-accent-dark/40 font-semibold' 
+                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <input 
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {}}
+                          className="w-4 h-4 rounded text-accent-light focus:ring-accent-light pointer-events-none"
+                        />
+                        <span className="text-gray-900 dark:text-white line-clamp-1">{res.title}</span>
+                      </div>
+                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 shrink-0">
+                        {res.type || 'PDF'}
+                      </span>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
           <div className="flex items-center justify-end gap-3 pt-2">
             {editingId && (
               <button
@@ -504,6 +665,22 @@ export default function ManagePackages() {
                         </li>
                       ))}
                     </ul>
+
+                    {/* Included Unlock Badges */}
+                    {((pkg.includedExams && pkg.includedExams.length > 0) || (pkg.includedResources && pkg.includedResources.length > 0)) && (
+                      <div className="flex flex-wrap gap-1.5 mb-3 pt-2 border-t border-dashed border-gray-200 dark:border-gray-800">
+                        {pkg.includedExams && pkg.includedExams.length > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-primary-light/10 text-primary-light dark:text-primary-dark">
+                            <BookOpen size={11} /> {toBengaliNumber(pkg.includedExams.length)}টি পরীক্ষা আনলক
+                          </span>
+                        )}
+                        {pkg.includedResources && pkg.includedResources.length > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md bg-accent-light/15 text-accent-light dark:text-accent-dark">
+                            <FileText size={11} /> {toBengaliNumber(pkg.includedResources.length)}টি রিসোর্স আনলক
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 

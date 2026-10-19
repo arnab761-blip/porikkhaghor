@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { Package, Lock, CheckCircle2, Plus, Sparkles } from 'lucide-react';
+import { Package, Lock, CheckCircle2, Plus, Sparkles, BookOpen, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PaymentModal from '../components/PaymentModal';
 import { formatImageUrl } from '../lib/imageUtils';
@@ -15,29 +15,49 @@ interface CoursePackage {
   price: number;
   features: string[];
   imageUrl?: string;
+  includedExams?: string[];
+  includedResources?: string[];
 }
 
 export default function Packages() {
   const { userData, role } = useAuth();
   const isTeacher = role === 'owner' || role === 'assistant';
   const [packages, setPackages] = useState<CoursePackage[]>([]);
+  const [examsMap, setExamsMap] = useState<Record<string, string>>({});
+  const [resourcesMap, setResourcesMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
-    const fetchPackages = async () => {
+    const fetchPackagesAndItems = async () => {
       try {
         const q = query(collection(db, 'packages'), orderBy('createdAt', 'desc'));
         const snap = await getDocs(q);
         const res = snap.docs.map(d => ({ id: d.id, ...d.data() })) as CoursePackage[];
         setPackages(res);
+
+        // Fetch exam titles for lookup
+        const examSnap = await getDocs(collection(db, 'exams'));
+        const eMap: Record<string, string> = {};
+        examSnap.docs.forEach(d => {
+          eMap[d.id] = d.data().title || 'পরীক্ষা';
+        });
+        setExamsMap(eMap);
+
+        // Fetch resource titles for lookup
+        const resSnap = await getDocs(collection(db, 'resources'));
+        const rMap: Record<string, string> = {};
+        resSnap.docs.forEach(d => {
+          rMap[d.id] = d.data().title || 'রিসোর্স';
+        });
+        setResourcesMap(rMap);
       } catch (error) {
         console.error("Error fetching packages:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchPackages();
+    fetchPackagesAndItems();
   }, []);
 
   const toBengaliNumber = (num: number | string) => {
@@ -154,6 +174,53 @@ export default function Packages() {
                       </li>
                     ))}
                   </ul>
+
+                  {/* Included Unlocked Items (Exams & Resources) */}
+                  {((pkg.includedExams && pkg.includedExams.length > 0) || (pkg.includedResources && pkg.includedResources.length > 0)) && (
+                    <div className="mb-6 pt-4 border-t border-dashed border-gray-200 dark:border-gray-800 space-y-3">
+                      <span className="text-xs font-bold text-gray-500 dark:text-gray-400 block uppercase tracking-wider">
+                        প্যাকেজে অন্তর্ভুক্ত কনটেন্ট (আনলক হবে):
+                      </span>
+
+                      {/* Included Exams List */}
+                      {pkg.includedExams && pkg.includedExams.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-primary-light dark:text-primary-dark mb-1.5">
+                            <BookOpen size={14} /> {toBengaliNumber(pkg.includedExams.length)}টি পরীক্ষা:
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
+                            {pkg.includedExams.map(exId => (
+                              <span 
+                                key={exId}
+                                className="inline-flex items-center text-xs px-2.5 py-1 rounded-lg bg-primary-light/5 dark:bg-primary-dark/15 text-primary-light dark:text-primary-dark border border-primary-light/20 dark:border-primary-dark/30 font-medium"
+                              >
+                                {examsMap[exId] || 'পরীক্ষা'}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Included Resources List */}
+                      {pkg.includedResources && pkg.includedResources.length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 mb-1.5">
+                            <FileText size={14} /> {toBengaliNumber(pkg.includedResources.length)}টি রিসোর্স ও শিট:
+                          </div>
+                          <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
+                            {pkg.includedResources.map(resId => (
+                              <span 
+                                key={resId}
+                                className="inline-flex items-center text-xs px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 font-medium"
+                              >
+                                {resourcesMap[resId] || 'রিসোর্স'}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-4 mt-auto border-t border-gray-100 dark:border-gray-800">
