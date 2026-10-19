@@ -402,6 +402,8 @@ export default function TakeExam() {
     const totalScore = Number(((correct * marks) - (wrong * neg)).toFixed(2));
     const outOf = (activeQuestions.length || exam.questions.length || 1) * marks;
 
+    const activeQuestionIndices = activeQuestions.map(q => exam.questions.findIndex(eq => eq.id === q.id));
+
     const resultData = {
       examId: id,
       examTitle: exam.title,
@@ -411,6 +413,9 @@ export default function TakeExam() {
       answers,
       negativeMarking: neg,
       marksPerQuestion: marks,
+      activeQuestionIndices,
+      activeQuestionIds: activeQuestions.map(q => q.id),
+      totalExamQuestions: activeQuestions.length,
       stats: { correct, wrong, skipped, totalScore, outOf },
       submittedAt: serverTimestamp()
     };

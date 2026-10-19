@@ -127,15 +127,78 @@ export default function ExamResult() {
         ? Number(examData.negativeMarking) 
         : (examData?.admissionPattern === 'du_7college' ? 0 : 0.25));
 
+  // Determine relevant questions for this student's exam attempt
+  const studentQuestions: Array<{ q: any; origIdx: number; displayIdx: number }> = (() => {
+    if (!Array.isArray(examData?.questions)) return [];
+
+    // 1. If resultData has activeQuestionIndices explicitly saved
+    if (Array.isArray(resultData?.activeQuestionIndices) && resultData.activeQuestionIndices.length > 0) {
+      return resultData.activeQuestionIndices
+        .map((origIdx: number, displayIdx: number) => ({ q: examData.questions[origIdx], origIdx, displayIdx }))
+        .filter((item: any) => item.q);
+    }
+
+    // 2. If resultData has activeQuestionIds explicitly saved
+    if (Array.isArray(resultData?.activeQuestionIds) && resultData.activeQuestionIds.length > 0) {
+      const idSet = new Set(resultData.activeQuestionIds);
+      let dIdx = 0;
+      return examData.questions
+        .map((q: any, origIdx: number) => ({ q, origIdx }))
+        .filter((item: any) => idSet.has(item.q.id))
+        .map((item: any) => ({ ...item, displayIdx: dIdx++ }));
+    }
+
+    // 3. If exam had sections / optionals and student was answering a subset (e.g. 100 out of 150)
+    const savedOutOf = Number(resultData?.stats?.outOf) || 0;
+    const targetQCount = Math.round(savedOutOf / marks);
+
+    if (targetQCount > 0 && targetQCount < examData.questions.length) {
+      // Find subjects the student answered
+      const answeredSubjects = new Set<string>();
+      if (answers) {
+        Object.keys(answers).forEach(k => {
+          const q = examData.questions[Number(k)];
+          if (q?.subject) answeredSubjects.add(q.subject.trim().toUpperCase());
+        });
+      }
+
+      // Always include compulsory subjects
+      const compulsory = (examData.compulsorySubjects || []).map((s: string) => s.trim().toUpperCase());
+      const selectedSubjects = new Set<string>([...compulsory, ...answeredSubjects]);
+
+      // Pick remaining subjects to match targetQCount
+      const allDistinctSubjects: string[] = Array.from(new Set(examData.questions.map((q: any) => String(q.subject || '').trim().toUpperCase()))).filter(Boolean) as string[];
+      for (const sub of allDistinctSubjects) {
+        const countWithSub = examData.questions.filter((q: any) => selectedSubjects.has(String(q.subject || '').trim().toUpperCase())).length;
+        if (countWithSub < targetQCount && !selectedSubjects.has(sub)) {
+          selectedSubjects.add(sub);
+        }
+      }
+
+      let dIdx = 0;
+      const filtered = examData.questions
+        .map((q: any, origIdx: number) => ({ q, origIdx }))
+        .filter((item: any) => selectedSubjects.has((item.q.subject || '').trim().toUpperCase()))
+        .map((item: any) => ({ ...item, displayIdx: dIdx++ }));
+
+      if (filtered.length === targetQCount) {
+        return filtered;
+      }
+    }
+
+    // 4. Default: all questions
+    return examData.questions.map((q: any, origIdx: number) => ({ q, origIdx, displayIdx: origIdx }));
+  })();
+
   // Dynamically recompute stats using getCorrectAnswerIndex to fix any misgraded questions from past attempts
   let dynamicStats = null;
-  if (Array.isArray(examData?.questions) && answers) {
+  if (studentQuestions.length > 0 && answers) {
     let correct = 0;
     let wrong = 0;
     let skipped = 0;
 
-    examData.questions.forEach((q: any, idx: number) => {
-      const uAns = answers[idx];
+    studentQuestions.forEach(({ q, origIdx }: any) => {
+      const uAns = answers[origIdx];
       const correctIdx = getCorrectAnswerIndex(q);
 
       if (uAns === undefined || uAns === null) {
@@ -148,7 +211,7 @@ export default function ExamResult() {
     });
 
     const totalScore = Number(((correct * marks) - (wrong * neg)).toFixed(2));
-    const outOf = (examData.questions.length || 1) * marks;
+    const outOf = studentQuestions.length * marks;
 
     dynamicStats = { correct, wrong, skipped, totalScore, outOf };
   }
@@ -165,8 +228,7 @@ export default function ExamResult() {
   }
 
   if (Number.isNaN(displayOutOf) || displayOutOf <= 0) {
-    const totalQ = (Number(activeStats?.correct) || 0) + (Number(activeStats?.wrong) || 0) + (Number(activeStats?.skipped) || 0);
-    displayOutOf = (totalQ || examData?.questions?.length || 100) * marks;
+    displayOutOf = (studentQuestions.length || examData?.questions?.length || 100) * marks;
   }
 
   const pieData = [
@@ -301,8 +363,8 @@ export default function ExamResult() {
 
       {/* Answer Review */}
       <div className="space-y-6">
-        {(Array.isArray(examData?.questions) ? examData.questions : []).map((q: any, idx: number) => {
-          const userAnswer = answers ? answers[idx] : undefined;
+        {studentQuestions.map(({ q, origIdx, displayIdx }: any) => {
+          const userAnswer = answers ? answers[origIdx] : undefined;
           const correctIdx = getCorrectAnswerIndex(q);
           const isCorrect = userAnswer === correctIdx;
           const isSkipped = userAnswer === undefined || userAnswer === null;
@@ -312,7 +374,7 @@ export default function ExamResult() {
           if (filterMode === 'skipped' && !isSkipped) return null;
 
           return (
-            <div key={idx} className={`p-6 rounded-2xl border-2 ${
+            <div key={origIdx} className={`p-6 rounded-2xl border-2 ${
               isCorrect ? 'border-green-200 dark:border-green-900 bg-green-50/30 dark:bg-green-900/10' : 
               isSkipped ? 'border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30' : 
               'border-red-200 dark:border-red-900 bg-red-50/30 dark:bg-red-900/10'
@@ -325,10 +387,13 @@ export default function ExamResult() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-medium text-lg flex gap-2">
-                    <span>{idx + 1}.</span>
+                    <span>{displayIdx + 1}.</span>
                     <span className="flex-1"><MathText text={q?.text || ''} /></span>
                   </h3>
-                  {q?.tags && <span className="inline-block mt-2 text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">{q.tags}</span>}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {q?.subject && <span className="inline-block text-xs px-2.5 py-1 bg-primary-light/10 text-primary-light dark:text-blue-300 font-semibold rounded-md">{q.subject}</span>}
+                    {q?.tags && <span className="inline-block text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">{q.tags}</span>}
+                  </div>
                 </div>
               </div>
 
@@ -362,7 +427,7 @@ export default function ExamResult() {
               <div className="ml-9">
                 <QuestionDiscussion 
                   examId={resultData.examId} 
-                  questionIndex={idx} 
+                  questionIndex={origIdx} 
                   examTitle={examData?.title || resultData.examTitle}
                   questionText={q?.text || ''}
                 />
