@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -128,8 +128,8 @@ export default function ExamResult() {
         : (examData?.admissionPattern === 'du_7college' ? 0 : 0.25));
 
   // Dynamically recompute stats using getCorrectAnswerIndex to fix any misgraded questions from past attempts
-  const dynamicStats = useMemo(() => {
-    if (!examData?.questions || !answers) return null;
+  let dynamicStats = null;
+  if (Array.isArray(examData?.questions) && answers) {
     let correct = 0;
     let wrong = 0;
     let skipped = 0;
@@ -150,8 +150,8 @@ export default function ExamResult() {
     const totalScore = Number(((correct * marks) - (wrong * neg)).toFixed(2));
     const outOf = (examData.questions.length || 1) * marks;
 
-    return { correct, wrong, skipped, totalScore, outOf };
-  }, [examData, answers, marks, neg]);
+    dynamicStats = { correct, wrong, skipped, totalScore, outOf };
+  }
 
   const activeStats = dynamicStats || stats || { correct: 0, wrong: 0, skipped: 0, totalScore: 0, outOf: 0 };
 
@@ -227,8 +227,8 @@ export default function ExamResult() {
           </div>
           <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
             {neg > 0 ? (
-              stats.wrong > 0 
-                ? `(নেগেটিভ মার্কিংয়ের জন্য -${toBengaliNumber((stats.wrong * neg).toFixed(2))} নম্বর কাটা গেছে)` 
+              activeStats.wrong > 0 
+                ? `(নেগেটিভ মার্কিংয়ের জন্য -${toBengaliNumber((activeStats.wrong * neg).toFixed(2))} নম্বর কাটা গেছে)` 
                 : '(কোনো নেগেটিভ মার্কিং কাটা যায়নি)'
             ) : (
               <span className="text-emerald-600 dark:text-emerald-400 font-semibold">🎉 এই পরীক্ষায় কোনো নেগেটিভ মার্কিং ছিল না!</span>
@@ -301,8 +301,8 @@ export default function ExamResult() {
 
       {/* Answer Review */}
       <div className="space-y-6">
-        {examData.questions.map((q: any, idx: number) => {
-          const userAnswer = answers[idx];
+        {(Array.isArray(examData?.questions) ? examData.questions : []).map((q: any, idx: number) => {
+          const userAnswer = answers ? answers[idx] : undefined;
           const correctIdx = getCorrectAnswerIndex(q);
           const isCorrect = userAnswer === correctIdx;
           const isSkipped = userAnswer === undefined || userAnswer === null;
@@ -326,14 +326,14 @@ export default function ExamResult() {
                 <div className="flex-1">
                   <h3 className="font-medium text-lg flex gap-2">
                     <span>{idx + 1}.</span>
-                    <span className="flex-1"><MathText text={q.text} /></span>
+                    <span className="flex-1"><MathText text={q?.text || ''} /></span>
                   </h3>
-                  {q.tags && <span className="inline-block mt-2 text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">{q.tags}</span>}
+                  {q?.tags && <span className="inline-block mt-2 text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-300">{q.tags}</span>}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-9 mb-4">
-                {q.options.map((opt: string, optIdx: number) => {
+                {(Array.isArray(q?.options) ? q.options : []).map((opt: string, optIdx: number) => {
                   let optStyle = "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800";
                   
                   if (optIdx === correctIdx) {
@@ -344,7 +344,7 @@ export default function ExamResult() {
 
                   return (
                     <div key={optIdx} className={`p-3 rounded-xl border ${optStyle} flex justify-between items-center gap-2`}>
-                      <span className="flex-1"><MathText text={opt} /></span>
+                      <span className="flex-1"><MathText text={opt || ''} /></span>
                       {optIdx === correctIdx && <CheckCircle2 size={18} className="text-green-600 shrink-0" />}
                       {optIdx === userAnswer && !isCorrect && <XCircle size={18} className="text-red-600 shrink-0" />}
                     </div>
@@ -352,7 +352,7 @@ export default function ExamResult() {
                 })}
               </div>
 
-              {q.explanation && (
+              {q?.explanation && (
                 <div className="ml-9 p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 rounded-xl text-sm border border-blue-100 dark:border-blue-900">
                   <strong className="block mb-1 text-blue-800 dark:text-blue-300">ব্যাখ্যা:</strong>
                   <MathText text={q.explanation} />
@@ -364,7 +364,7 @@ export default function ExamResult() {
                   examId={resultData.examId} 
                   questionIndex={idx} 
                   examTitle={examData?.title || resultData.examTitle}
-                  questionText={q.text}
+                  questionText={q?.text || ''}
                 />
               </div>
             </div>
