@@ -250,32 +250,45 @@ export default function ExamList() {
     return <div className="p-16 text-center text-lg font-medium text-gray-500">পরীক্ষাগুলো লোড হচ্ছে...</div>;
   }
 
+  // Only show the Telegram signboard if the student has purchased a course or a paid exam, or is teacher/owner
+  const hasPurchasedAnyCourseOrExam = Boolean(
+    role === 'owner' || 
+    role === 'assistant' ||
+    userData?.hasPaidAccess === true ||
+    userData?.isPaid === true ||
+    (Array.isArray(userData?.unlockedPackages) && userData.unlockedPackages.length > 0) ||
+    (Array.isArray(userData?.unlockedExams) && userData.unlockedExams.length > 0) ||
+    (Array.isArray(userData?.unlockedResources) && userData.unlockedResources.length > 0)
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       className="max-w-7xl mx-auto pb-16 px-4 sm:px-6"
     >
-      {/* Community Announcement Banner (Screenshot 1 Style) */}
-      <div className="mb-8 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5 text-center sm:text-left">
-          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
-            <CheckCircle2 size={24} className="text-white" />
+      {/* Community Announcement Banner (Only shown if student purchased a package/course or paid exam) */}
+      {hasPurchasedAnyCourseOrExam && (
+        <div className="mb-8 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 text-center sm:text-left">
+            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+              <CheckCircle2 size={24} className="text-white" />
+            </div>
+            <div>
+              <h4 className="font-bold text-base sm:text-lg">{t('telegramNoticeTitle')}</h4>
+              <p className="text-white/90 text-xs sm:text-sm">{t('telegramNoticeSub')}</p>
+            </div>
           </div>
-          <div>
-            <h4 className="font-bold text-base sm:text-lg">{t('telegramNoticeTitle')}</h4>
-            <p className="text-white/90 text-xs sm:text-sm">{t('telegramNoticeSub')}</p>
-          </div>
+          <a
+            href={telegramLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 px-5 py-2.5 bg-white text-emerald-700 hover:bg-emerald-50 font-bold rounded-xl text-sm flex items-center gap-2 shadow-sm transition-all hover:scale-105"
+          >
+            <Send size={16} /> {t('joinTelegram')}
+          </a>
         </div>
-        <a
-          href={telegramLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 px-5 py-2.5 bg-white text-emerald-700 hover:bg-emerald-50 font-bold rounded-xl text-sm flex items-center gap-2 shadow-sm transition-all hover:scale-105"
-        >
-          <Send size={16} /> {t('joinTelegram')}
-        </a>
-      </div>
+      )}
 
       {/* Main Header & Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { 
   BookOpen, 
   Sparkles, 
@@ -35,9 +36,38 @@ interface GuideSection {
 
 export default function UserGuide() {
   const { toLangNumber, language } = useLanguage();
+  const { user, userData, role } = useAuth();
+
+  // Role Permissions:
+  // 1. Master Admin (Developer/Owner - geminioperator5@gmail.com): All 3 (Teacher, Student, Client Pitch)
+  // 2. Teacher / Admin (owner, assistant): Teacher & Student (NO Client Pitch)
+  // 3. Student / Guest: Student Guide ONLY
+  const isMasterAdmin = Boolean(
+    (user?.email && user.email.toLowerCase().trim() === 'geminioperator5@gmail.com') ||
+    userData?.isMasterAdmin === true
+  );
+
+  const isTeacher = Boolean(
+    isMasterAdmin ||
+    role === 'owner' ||
+    role === 'assistant' ||
+    userData?.role === 'owner' ||
+    userData?.role === 'assistant'
+  );
+
+  const canViewTeacher = isTeacher;
+  const canViewClient = isMasterAdmin;
+  const canViewStudent = true;
+
   const [activeTab, setActiveTab] = useState<'all' | 'teacher' | 'student' | 'business'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedId, setExpandedId] = useState<string | null>('create-exam');
+  const [expandedId, setExpandedId] = useState<string | null>(canViewTeacher ? 'create-exam' : 'student-exam');
+
+  useEffect(() => {
+    if (!canViewTeacher && expandedId === 'create-exam') {
+      setExpandedId('student-exam');
+    }
+  }, [canViewTeacher, expandedId]);
 
   const toggleExpand = (id: string) => {
     setExpandedId(prev => prev === id ? null : id);
@@ -557,21 +587,38 @@ export default function UserGuide() {
   const studentGuides = language === 'en' ? studentGuidesEn : studentGuidesBn;
   const businessGuides = language === 'en' ? businessGuidesEn : businessGuidesBn;
 
-  // Combine and filter
+  // Combine and filter based on permissions
   const allGuides = [
-    ...teacherGuides.map(g => ({ ...g, category: 'teacher' as const })),
-    ...studentGuides.map(g => ({ ...g, category: 'student' as const })),
-    ...businessGuides.map(g => ({ ...g, category: 'business' as const }))
+    ...(canViewTeacher ? teacherGuides.map(g => ({ ...g, category: 'teacher' as const })) : []),
+    ...(canViewStudent ? studentGuides.map(g => ({ ...g, category: 'student' as const })) : []),
+    ...(canViewClient ? businessGuides.map(g => ({ ...g, category: 'business' as const })) : [])
   ];
 
+  const effectiveTab = 
+    (activeTab === 'teacher' && !canViewTeacher) ? 'student' :
+    (activeTab === 'business' && !canViewClient) ? 'student' :
+    activeTab;
+
   const filteredGuides = allGuides.filter(g => {
-    if (activeTab !== 'all' && g.category !== activeTab) return false;
+    if (effectiveTab !== 'all' && g.category !== effectiveTab) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return g.title.toLowerCase().includes(q) || 
            g.summary.toLowerCase().includes(q) ||
            g.steps.some(s => s.heading.toLowerCase().includes(q) || s.description.toLowerCase().includes(q));
   });
+
+  const heroSubtitle = canViewClient
+    ? (language === 'en' 
+        ? 'Comprehensive platform documentation covering exam creation, question import, package monetization, student access management, and client pitch materials.' 
+        : 'পরীক্ষা তৈরি, এক্সেল আপলোড, প্যাকেজ তৈরি, স্টুডেন্ট ম্যানেজমেন্ট ও ক্লায়েন্ট উপস্থাপনার সম্পূর্ণ নির্দেশিকা।')
+    : canViewTeacher
+    ? (language === 'en'
+        ? 'Teacher and admin manual for creating exams, Excel question imports, package management, and student unlocks.'
+        : 'শিক্ষক ও অ্যাডমিনদের জন্য পরীক্ষা তৈরি, এক্সেল আপলোড, প্যাকেজ ও স্টুডেন্ট আনলক ম্যানেজমেন্ট নির্দেশিকা।')
+    : (language === 'en'
+        ? 'Student guide for attending exams, live timers, negative marking calculations, and reviewing mistakes.'
+        : 'শিক্ষার্থীদের পরীক্ষা দেওয়ার নিয়ম, লাইভ টাইমার, ওএমআর শিট দাগানো, ফলাফল বিশ্লেষণ ও ভুল উত্তরের রিভিশন নির্দেশিকা।');
 
   return (
     <motion.div 
@@ -589,9 +636,7 @@ export default function UserGuide() {
             {language === 'en' ? 'Platform Feature Documentation & Manual' : 'প্ল্যাটফর্মের সকল ফিচার ও ব্যবহার নির্দেশিকা'}
           </h1>
           <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
-            {language === 'en' 
-              ? 'Comprehensive step-by-step documentation for creating exams, Excel question uploads, course packaging, student unlock management, and exam taking guidelines.' 
-              : 'পরীক্ষা তৈরি, এক্সেল প্রশ্ন আপলোড, প্যাকেজ তৈরি, স্টুডেন্ট আনলক ম্যানেজমেন্ট এবং শিক্ষার্থীদের পরীক্ষা দেওয়ার সব নিয়মাবলী এখানে সুন্দরভাবে ধাপে ধাপে সাজানো রয়েছে।'}
+            {heroSubtitle}
           </p>
         </div>
 
@@ -613,49 +658,59 @@ export default function UserGuide() {
           />
         </div>
 
-        {/* Category Tabs */}
-        <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1.5 rounded-2xl shrink-0 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-              activeTab === 'all'
-                ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            {language === 'en' ? `All Topics (${toLangNumber(allGuides.length)})` : `সকল বিষয় (${toLangNumber(allGuides.length)})`}
-          </button>
-          <button
-            onClick={() => setActiveTab('teacher')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'teacher'
-                ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <ShieldCheck size={14} /> {language === 'en' ? 'Teacher & Admin' : 'শিক্ষক ও এডমিন'}
-          </button>
-          <button
-            onClick={() => setActiveTab('student')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'student'
-                ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <GraduationCap size={14} /> {language === 'en' ? 'Student Guide' : 'শিক্ষার্থী গাইড'}
-          </button>
-          <button
-            onClick={() => setActiveTab('business')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'business'
-                ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
-                : 'text-gray-600 dark:text-gray-400'
-            }`}
-          >
-            <Briefcase size={14} /> {language === 'en' ? 'Client Pitch' : 'ক্লায়েন্ট পিচ'}
-          </button>
-        </div>
+        {/* Category Tabs (Teacher/Admin or Master Admin) */}
+        {(canViewTeacher || canViewClient) ? (
+          <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1.5 rounded-2xl shrink-0 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                effectiveTab === 'all'
+                  ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              {language === 'en' ? `All Topics (${toLangNumber(allGuides.length)})` : `সকল বিষয় (${toLangNumber(allGuides.length)})`}
+            </button>
+            {canViewTeacher && (
+              <button
+                onClick={() => setActiveTab('teacher')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  effectiveTab === 'teacher'
+                    ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                <ShieldCheck size={14} /> {language === 'en' ? 'Teacher & Admin' : 'শিক্ষক ও এডমিন'}
+              </button>
+            )}
+            <button
+              onClick={() => setActiveTab('student')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                effectiveTab === 'student'
+                  ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400'
+              }`}
+            >
+              <GraduationCap size={14} /> {language === 'en' ? 'Student Guide' : 'শিক্ষার্থী গাইড'}
+            </button>
+            {canViewClient && (
+              <button
+                onClick={() => setActiveTab('business')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  effectiveTab === 'business'
+                    ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                <Briefcase size={14} /> {language === 'en' ? 'Client Pitch' : 'ক্লায়েন্ট পিচ'}
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl text-xs font-bold shrink-0">
+            <GraduationCap size={14} /> {language === 'en' ? `Student Guide (${toLangNumber(allGuides.length)})` : `শিক্ষার্থী নির্দেশিকা (${toLangNumber(allGuides.length)})`}
+          </div>
+        )}
       </div>
 
       {/* Guide Cards Accordion */}
@@ -761,18 +816,37 @@ export default function UserGuide() {
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <Link
-            to="/exams"
-            className="flex-1 sm:flex-initial px-5 py-2.5 bg-primary-light hover:bg-primary-dark text-white rounded-xl text-xs font-bold transition-all text-center shadow-sm"
-          >
-            {language === 'en' ? 'Exams Catalog →' : 'পরীক্ষা সমূহ →'}
-          </Link>
-          <Link
-            to="/courses"
-            className="flex-1 sm:flex-initial px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold transition-all text-center"
-          >
-            {language === 'en' ? 'Course Packages →' : 'প্যাকেজ সমূহ →'}
-          </Link>
+          {canViewTeacher ? (
+            <>
+              <Link
+                to="/create-exam"
+                className="flex-1 sm:flex-initial px-5 py-2.5 bg-primary-light hover:bg-primary-dark text-white rounded-xl text-xs font-bold transition-all text-center shadow-sm"
+              >
+                {language === 'en' ? 'Create Exam →' : 'পরীক্ষা তৈরি →'}
+              </Link>
+              <Link
+                to="/manage-students"
+                className="flex-1 sm:flex-initial px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold transition-all text-center"
+              >
+                {language === 'en' ? 'Manage Students →' : 'শিক্ষার্থী ম্যানেজ →'}
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/exams"
+                className="flex-1 sm:flex-initial px-5 py-2.5 bg-primary-light hover:bg-primary-dark text-white rounded-xl text-xs font-bold transition-all text-center shadow-sm"
+              >
+                {language === 'en' ? 'Exams Catalog →' : 'পরীক্ষা সমূহ →'}
+              </Link>
+              <Link
+                to="/courses"
+                className="flex-1 sm:flex-initial px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold transition-all text-center"
+              >
+                {language === 'en' ? 'Course Packages →' : 'প্যাকেজ সমূহ →'}
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </motion.div>
