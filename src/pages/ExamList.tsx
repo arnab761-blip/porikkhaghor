@@ -23,6 +23,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import PaymentModal from '../components/PaymentModal';
+import { isExamUnlocked, type PackageAccessItem } from '../lib/accessControl';
 
 interface Exam {
   id: string;
@@ -43,6 +44,8 @@ export default function ExamList() {
   const [loading, setLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   
+  const [packagesList, setPackagesList] = useState<PackageAccessItem[]>([]);
+
   // Navigation & Folder State
   const [currentPath, setCurrentPath] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,6 +57,7 @@ export default function ExamList() {
 
   const CACHE_KEY = 'porikkhaghor_cached_exams';
   const CACHE_TIME_KEY = 'porikkhaghor_cached_exams_time';
+  const PKG_CACHE_KEY = 'porikkhaghor_cached_packages_list';
   const CACHE_TTL = 3 * 60 * 1000; // 3 minutes cache to drastically cut down Firestore reads
 
   const fetchExams = async (forceRefresh = false) => {
@@ -64,11 +68,18 @@ export default function ExamList() {
         // Check cache first
         const cached = sessionStorage.getItem(CACHE_KEY);
         const cachedTime = sessionStorage.getItem(CACHE_TIME_KEY);
+        const cachedPkgs = sessionStorage.getItem(PKG_CACHE_KEY);
         if (cached && cachedTime && (Date.now() - Number(cachedTime) < CACHE_TTL)) {
           try {
             const parsed = JSON.parse(cached);
             if (Array.isArray(parsed) && parsed.length > 0) {
               setExams(parsed);
+              if (cachedPkgs) {
+                try {
+                  const parsedPkgs = JSON.parse(cachedPkgs);
+                  if (Array.isArray(parsedPkgs)) setPackagesList(parsedPkgs);
+                } catch (e) {}
+              }
               setLoading(false);
               return;
             }
@@ -87,6 +98,20 @@ export default function ExamList() {
       setExams(fetchedExams);
       sessionStorage.setItem(CACHE_KEY, JSON.stringify(fetchedExams));
       sessionStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+
+      // Fetch packages list for access control check
+      try {
+        const pkgSnap = await getDocs(collection(db, 'packages'));
+        const pkgs = pkgSnap.docs.map(d => ({
+          id: d.id,
+          includedExams: d.data().includedExams || [],
+          includedResources: d.data().includedResources || []
+        })) as PackageAccessItem[];
+        setPackagesList(pkgs);
+        sessionStorage.setItem(PKG_CACHE_KEY, JSON.stringify(pkgs));
+      } catch (pe) {
+        console.error("Error fetching packages in ExamList:", pe);
+      }
 
       // Fetch Telegram link from settings if exists
       const settingsSnap = await getDoc(doc(db, 'settings', 'adminProfile'));
@@ -492,7 +517,8 @@ export default function ExamList() {
   // Render individual exam card (matching Screenshot 3 & 4)
   function renderExamCard(exam: Exam) {
     const totalMarks = (exam.totalQuestions || 0) * (exam.marksPerQuestion || 1);
-    const isLocked = exam.isPaid && !userData?.hasPaidAccess;
+    const isUnlocked = isExamUnlocked(exam, userData, packagesList);
+    const isLocked = exam.isPaid && !isUnlocked;
 
     // Check if exam is in-progress
     const savedProgressStr = localStorage.getItem(`exam_progress_${exam.id}`);
@@ -532,9 +558,9 @@ export default function ExamList() {
               চলমান পরীক্ষা
             </span>
           ) : exam.isPaid ? (
-            userData?.hasPaidAccess ? (
-              <span className="text-xs font-bold px-3 py-1 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-full border border-blue-200/60 dark:border-blue-800/40">
-                PURCHASED
+            isUnlocked ? (
+              <span className="text-xs font-bold px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-1">
+                <CheckCircle2 size={12} /> PURCHASED
               </span>
             ) : (
               <span className="text-xs font-bold px-3 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-full border border-amber-200/60 dark:border-amber-800/40 flex items-center gap-1">

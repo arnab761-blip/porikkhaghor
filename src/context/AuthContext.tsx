@@ -62,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             createdAt: serverTimestamp(),
             unlockedExams: [],
             unlockedPackages: [],
+            unlockedResources: [],
             hasPaidAccess: false
           };
           await setDoc(userRef, newUserData);

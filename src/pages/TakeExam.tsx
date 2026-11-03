@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,6 +8,7 @@ import { Clock, LayoutGrid, X, AlertCircle, CheckCircle2, AlertTriangle } from '
 import { ADMISSION_PRESETS, isSubjectAllowed } from '../lib/admissionRules';
 import { MathText } from '../components/MathText';
 import { getCorrectAnswerIndex } from '../lib/questionUtils';
+import { isExamUnlocked, type PackageAccessItem } from '../lib/accessControl';
 
 interface Question {
   id: string;
@@ -47,6 +48,7 @@ interface ExamData {
   questions: Question[];
   marksPerQuestion: number;
   negativeMarking: number;
+  isPaid?: boolean;
   hasSections?: boolean;
   admissionPattern?: string;
   compulsorySubjects?: string[];
@@ -59,7 +61,7 @@ interface ExamData {
 export default function TakeExam() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userData, role, loading: authLoading } = useAuth();
   
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -87,7 +89,7 @@ export default function TakeExam() {
 
   // Fetch Exam
   useEffect(() => {
-    if (!id) return;
+    if (!id || authLoading) return;
     
     const fetchExam = async () => {
       try {
@@ -96,6 +98,27 @@ export default function TakeExam() {
         
         if (docSnap.exists()) {
           const data = docSnap.data() as ExamData;
+
+          // Check Paid Access for students
+          if (data.isPaid && role !== 'owner' && role !== 'assistant') {
+            try {
+              const pkgSnap = await getDocs(collection(db, 'packages'));
+              const pkgs = pkgSnap.docs.map(d => ({
+                id: d.id,
+                includedExams: d.data().includedExams || [],
+                includedResources: d.data().includedResources || []
+              })) as PackageAccessItem[];
+
+              if (!isExamUnlocked({ id, isPaid: true }, userData, pkgs)) {
+                alert('এই পরীক্ষাটি পেইড এবং আপনার জন্য এখনও আনলক করা হয়নি। পরীক্ষাটি দেওয়ার জন্য উপযুক্ত প্যাকেজ কিনুন অথবা শিক্ষকের সাথে যোগাযোগ করুন।');
+                navigate('/exams');
+                return;
+              }
+            } catch (err) {
+              console.error("Access check error in TakeExam:", err);
+            }
+          }
+
           setExam(data);
           
           // Restore progress if available
@@ -197,7 +220,7 @@ export default function TakeExam() {
     };
     
     fetchExam();
-  }, [id, navigate]);
+  }, [id, navigate, userData, role, authLoading]);
 
   // Timer
   useEffect(() => {

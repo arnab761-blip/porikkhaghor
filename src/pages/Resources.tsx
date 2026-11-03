@@ -3,8 +3,9 @@ import { motion } from 'framer-motion';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { FileText, Lock, Download, Search } from 'lucide-react';
+import { FileText, Lock, Download, Search, CheckCircle2 } from 'lucide-react';
 import PaymentModal from '../components/PaymentModal';
+import { isResourceUnlocked, type PackageAccessItem } from '../lib/accessControl';
 
 interface Resource {
   id: string;
@@ -18,24 +19,38 @@ interface Resource {
 export default function Resources() {
   const { userData } = useAuth();
   const [resources, setResources] = useState<Resource[]>([]);
+  const [packagesList, setPackagesList] = useState<PackageAccessItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
-    const fetchResources = async () => {
+    const fetchResourcesAndPackages = async () => {
       try {
         const q = query(collection(db, 'resources'), orderBy('createdAt', 'desc'));
         const snap = await getDocs(q);
         const res = snap.docs.map(d => ({ id: d.id, ...d.data() })) as Resource[];
         setResources(res);
+
+        // Fetch packages to check includedResources
+        try {
+          const pkgSnap = await getDocs(collection(db, 'packages'));
+          const pkgs = pkgSnap.docs.map(d => ({
+            id: d.id,
+            includedExams: d.data().includedExams || [],
+            includedResources: d.data().includedResources || []
+          })) as PackageAccessItem[];
+          setPackagesList(pkgs);
+        } catch (pe) {
+          console.error("Error fetching packages in Resources:", pe);
+        }
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     };
-    fetchResources();
+    fetchResourcesAndPackages();
   }, []);
 
   const filteredResources = resources.filter(r => 
@@ -71,41 +86,63 @@ export default function Resources() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredResources.map(res => (
-            <motion.div key={res.id} whileHover={{ y: -4 }} className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col h-full">
-              <div className="flex-grow">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="text-xs font-semibold px-2.5 py-1 bg-primary-light/10 dark:bg-primary-dark/20 text-primary-light dark:text-primary-dark rounded-md">
-                    {res.category || 'সাধারণ'}
-                  </span>
-                  <span className="text-xs font-semibold px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded">
-                    {res.type}
-                  </span>
-                </div>
-                <h3 className="text-xl font-bold mb-2 line-clamp-2">{res.title}</h3>
-              </div>
+          {filteredResources.map(res => {
+            const isUnlocked = isResourceUnlocked(res, userData, packagesList);
+            const isLocked = res.isPaid && !isUnlocked;
 
-              <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
-                {!userData?.hasPaidAccess && res.isPaid ? (
-                  <button 
-                    onClick={() => setShowPaymentModal(true)}
-                    className="w-full py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <Lock size={18} /> আনলক করুন
-                  </button>
-                ) : (
-                  <a 
-                    href={res.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-2.5 bg-accent-light text-white dark:text-gray-900 rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-yellow-500 transition-colors shadow-sm"
-                  >
-                    <Download size={18} /> দেখুন / ডাউনলোড করুন
-                  </a>
-                )}
-              </div>
-            </motion.div>
-          ))}
+            return (
+              <motion.div key={res.id} whileHover={{ y: -4 }} className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col h-full">
+                <div className="flex-grow">
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="text-xs font-semibold px-2.5 py-1 bg-primary-light/10 dark:bg-primary-dark/20 text-primary-light dark:text-primary-dark rounded-md">
+                      {res.category || 'সাধারণ'}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-semibold px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded">
+                        {res.type}
+                      </span>
+                      {res.isPaid ? (
+                        isUnlocked ? (
+                          <span className="text-[11px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-md border border-emerald-200/60 flex items-center gap-1">
+                            <CheckCircle2 size={11} /> আনলকড
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-bold px-2 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-md border border-amber-200/60 flex items-center gap-1">
+                            <Lock size={11} /> পেইড
+                          </span>
+                        )
+                      ) : (
+                        <span className="text-[11px] font-bold px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-md border border-emerald-200/60">
+                          ফ্রি
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold mb-2 line-clamp-2">{res.title}</h3>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
+                  {isLocked ? (
+                    <button 
+                      onClick={() => setShowPaymentModal(true)}
+                      className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-sm"
+                    >
+                      <Lock size={18} /> আনলক করুন
+                    </button>
+                  ) : (
+                    <a 
+                      href={res.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full py-2.5 bg-accent-light text-white dark:text-gray-900 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-yellow-500 transition-colors shadow-sm"
+                    >
+                      <Download size={18} /> দেখুন / ডাউনলোড করুন
+                    </a>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       )}
 

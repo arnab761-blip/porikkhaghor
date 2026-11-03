@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { 
   Search, 
-  UserCheck, 
   UserX, 
   AlertCircle, 
   ShieldCheck, 
@@ -13,7 +12,14 @@ import {
   Calendar, 
   BookOpen, 
   Trophy,
-  ExternalLink
+  ExternalLink,
+  Package,
+  Plus,
+  Trash2,
+  Lock,
+  Unlock,
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 
 interface StudentResult {
@@ -34,6 +40,23 @@ interface ExamOption {
   id: string;
   title: string;
   category?: string;
+  isPaid?: boolean;
+}
+
+interface PackageOption {
+  id: string;
+  title: string;
+  price: number;
+  includedExams?: string[];
+  includedResources?: string[];
+}
+
+interface ResourceOption {
+  id: string;
+  title: string;
+  type?: string;
+  category?: string;
+  isPaid?: boolean;
 }
 
 export default function ManageStudents() {
@@ -49,6 +72,13 @@ export default function ManageStudents() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Granular Access Control State
+  const [allPackages, setAllPackages] = useState<PackageOption[]>([]);
+  const [allResources, setAllResources] = useState<ResourceOption[]>([]);
+  const [selectedExamToUnlock, setSelectedExamToUnlock] = useState<string>('');
+  const [selectedResourceToUnlock, setSelectedResourceToUnlock] = useState<string>('');
+  const [updatingAccess, setUpdatingAccess] = useState(false);
+
   // Exam Submissions Tab State
   const [exams, setExams] = useState<ExamOption[]>([]);
   const [selectedExamId, setSelectedExamId] = useState<string>('');
@@ -57,26 +87,66 @@ export default function ManageStudents() {
   const [submissionSearch, setSubmissionSearch] = useState('');
   const [filterFirstAttemptOnly, setFilterFirstAttemptOnly] = useState(true);
 
-  // Fetch all exams for dropdown
+  // Fetch all exams, packages, and resources for access control & dropdown
   useEffect(() => {
-    const fetchExams = async () => {
+    const fetchCatalog = async () => {
       try {
-        const q = query(collection(db, 'exams'), orderBy('createdAt', 'desc'));
-        const snap = await getDocs(q);
+        // Fetch exams
+        const qExams = query(collection(db, 'exams'), orderBy('createdAt', 'desc'));
+        const snapExams = await getDocs(qExams);
         const list: ExamOption[] = [];
-        snap.forEach(d => {
-          list.push({ id: d.id, title: d.data().title, category: d.data().category });
+        snapExams.forEach(d => {
+          list.push({ 
+            id: d.id, 
+            title: d.data().title, 
+            category: d.data().category,
+            isPaid: d.data().isPaid 
+          });
         });
         setExams(list);
         if (list.length > 0) {
           setSelectedExamId(list[0].id);
+          setSelectedExamToUnlock(list[0].id);
+        }
+
+        // Fetch packages
+        const qPkgs = query(collection(db, 'packages'), orderBy('createdAt', 'desc'));
+        const snapPkgs = await getDocs(qPkgs);
+        const pkgs: PackageOption[] = [];
+        snapPkgs.forEach(d => {
+          pkgs.push({
+            id: d.id,
+            title: d.data().title,
+            price: Number(d.data().price) || 0,
+            includedExams: d.data().includedExams || [],
+            includedResources: d.data().includedResources || []
+          });
+        });
+        setAllPackages(pkgs);
+
+        // Fetch resources
+        const qRes = query(collection(db, 'resources'), orderBy('createdAt', 'desc'));
+        const snapRes = await getDocs(qRes);
+        const resList: ResourceOption[] = [];
+        snapRes.forEach(d => {
+          resList.push({
+            id: d.id,
+            title: d.data().title,
+            type: d.data().type,
+            category: d.data().category,
+            isPaid: d.data().isPaid
+          });
+        });
+        setAllResources(resList);
+        if (resList.length > 0) {
+          setSelectedResourceToUnlock(resList[0].id);
         }
       } catch (e) {
-        console.error("Error fetching exams list:", e);
+        console.error("Error fetching catalog in ManageStudents:", e);
       }
     };
 
-    fetchExams();
+    fetchCatalog();
   }, []);
 
   // Fetch submissions when an exam is selected in Tab 2
@@ -209,6 +279,118 @@ export default function ManageStudents() {
       setError('অ্যাক্সেস আপডেট করতে সমস্যা হয়েছে।');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const togglePackageAccess = async (pkgId: string) => {
+    if (!foundUser) return;
+    setUpdatingAccess(true);
+    setError('');
+    setSuccess('');
+    try {
+      const current = Array.isArray(foundUser.unlockedPackages) ? [...foundUser.unlockedPackages] : [];
+      let updated: string[];
+      let isAdded = false;
+      if (current.includes(pkgId)) {
+        updated = current.filter((id: string) => id !== pkgId);
+      } else {
+        updated = [...current, pkgId];
+        isAdded = true;
+      }
+      await updateDoc(doc(db, 'users', foundUser.id), { unlockedPackages: updated });
+      setFoundUser({ ...foundUser, unlockedPackages: updated });
+      setSuccess(isAdded ? 'প্যাকেজটি সফলভাবে আনলক করা হয়েছে!' : 'প্যাকেজের অ্যাক্সেস বন্ধ করা হয়েছে!');
+    } catch (err) {
+      console.error(err);
+      setError('প্যাকেজ অ্যাক্সেস পরিবর্তন করতে সমস্যা হয়েছে।');
+    } finally {
+      setUpdatingAccess(false);
+    }
+  };
+
+  const handleAddExamAccess = async () => {
+    if (!foundUser || !selectedExamToUnlock) return;
+    setUpdatingAccess(true);
+    setError('');
+    setSuccess('');
+    try {
+      const current = Array.isArray(foundUser.unlockedExams) ? [...foundUser.unlockedExams] : [];
+      if (current.includes(selectedExamToUnlock)) {
+        setError('এই পরীক্ষাটি ইতোমধ্যে এই শিক্ষার্থীর জন্য আনলক করা আছে।');
+        setUpdatingAccess(false);
+        return;
+      }
+      const updated = [...current, selectedExamToUnlock];
+      await updateDoc(doc(db, 'users', foundUser.id), { unlockedExams: updated });
+      setFoundUser({ ...foundUser, unlockedExams: updated });
+      setSuccess('নির্দিষ্ট পরীক্ষাটি সফলভাবে আনলক করা হয়েছে!');
+    } catch (err) {
+      console.error(err);
+      setError('পরীক্ষা আনলক করতে সমস্যা হয়েছে।');
+    } finally {
+      setUpdatingAccess(false);
+    }
+  };
+
+  const handleRemoveExamAccess = async (examId: string) => {
+    if (!foundUser) return;
+    setUpdatingAccess(true);
+    setError('');
+    setSuccess('');
+    try {
+      const current = Array.isArray(foundUser.unlockedExams) ? [...foundUser.unlockedExams] : [];
+      const updated = current.filter((id: string) => id !== examId);
+      await updateDoc(doc(db, 'users', foundUser.id), { unlockedExams: updated });
+      setFoundUser({ ...foundUser, unlockedExams: updated });
+      setSuccess('পরীক্ষার আনলক অ্যাক্সেস সরানো হয়েছে!');
+    } catch (err) {
+      console.error(err);
+      setError('অ্যাক্সেস সরাতে সমস্যা হয়েছে।');
+    } finally {
+      setUpdatingAccess(false);
+    }
+  };
+
+  const handleAddResourceAccess = async () => {
+    if (!foundUser || !selectedResourceToUnlock) return;
+    setUpdatingAccess(true);
+    setError('');
+    setSuccess('');
+    try {
+      const current = Array.isArray(foundUser.unlockedResources) ? [...foundUser.unlockedResources] : [];
+      if (current.includes(selectedResourceToUnlock)) {
+        setError('এই রিসোর্সটি ইতোমধ্যে এই শিক্ষার্থীর জন্য আনলক করা আছে।');
+        setUpdatingAccess(false);
+        return;
+      }
+      const updated = [...current, selectedResourceToUnlock];
+      await updateDoc(doc(db, 'users', foundUser.id), { unlockedResources: updated });
+      setFoundUser({ ...foundUser, unlockedResources: updated });
+      setSuccess('নির্দিষ্ট রিসোর্সটি সফলভাবে আনলক করা হয়েছে!');
+    } catch (err) {
+      console.error(err);
+      setError('রিসোর্স আনলক করতে সমস্যা হয়েছে।');
+    } finally {
+      setUpdatingAccess(false);
+    }
+  };
+
+  const handleRemoveResourceAccess = async (resourceId: string) => {
+    if (!foundUser) return;
+    setUpdatingAccess(true);
+    setError('');
+    setSuccess('');
+    try {
+      const current = Array.isArray(foundUser.unlockedResources) ? [...foundUser.unlockedResources] : [];
+      const updated = current.filter((id: string) => id !== resourceId);
+      await updateDoc(doc(db, 'users', foundUser.id), { unlockedResources: updated });
+      setFoundUser({ ...foundUser, unlockedResources: updated });
+      setSuccess('রিসোর্সের আনলক অ্যাক্সেস সরানো হয়েছে!');
+    } catch (err) {
+      console.error(err);
+      setError('অ্যাক্সেস সরাতে সমস্যা হয়েছে।');
+    } finally {
+      setUpdatingAccess(false);
     }
   };
 
@@ -345,21 +527,270 @@ export default function ManageStudents() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={togglePremiumAccess}
-                    disabled={loading}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-white text-sm transition-colors disabled:opacity-70 shadow-sm ${
-                      foundUser.hasPaidAccess 
-                        ? 'bg-red-500 hover:bg-red-600' 
-                        : 'bg-green-500 hover:bg-green-600'
-                    }`}
-                  >
-                    {foundUser.hasPaidAccess ? (
-                      <><UserX size={18} /> এক্সেস বাতিল করুন</>
+                  <div className="flex flex-col items-end gap-2">
+                    <button
+                      onClick={togglePremiumAccess}
+                      disabled={loading}
+                      className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-white text-sm transition-colors disabled:opacity-70 shadow-sm ${
+                        foundUser.hasPaidAccess 
+                          ? 'bg-red-500 hover:bg-red-600' 
+                          : 'bg-indigo-600 hover:bg-indigo-700'
+                      }`}
+                    >
+                      {foundUser.hasPaidAccess ? (
+                        <><UserX size={18} /> ভিআইপি এক্সেস বাতিল করুন</>
+                      ) : (
+                        <><Sparkles size={18} /> অল-ইন-ওয়ান ভিআইপি এক্সেস দিন</>
+                      )}
+                    </button>
+                    <span className="text-[11px] text-gray-400">
+                      (এটি দিলে ওয়েবসাইটের সব প্যাকেজ ও পরীক্ষা আনলক হবে)
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ================= Granular Access Control Section ================= */}
+              <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 sm:p-8 space-y-8">
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
+                    <Sparkles className="text-primary-light dark:text-primary-dark" size={22} />
+                    নির্দিষ্ট প্যাকেজ ও কনটেন্ট আনলক ম্যানেজমেন্ট
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    শিক্ষার্থী যে প্যাকেজ, একক পরীক্ষা বা নির্দিষ্ট রিসোর্স কিনেছে, শুধুমাত্র সেই কনটেন্টটি এখান থেকে আনলক করে দিন। বাকি অন্য সব কিছু তার জন্য লক থাকবে।
+                  </p>
+                </div>
+
+                {/* Global VIP warning if active */}
+                {foundUser.hasPaidAccess && (
+                  <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-2xl flex items-start gap-3 text-amber-800 dark:text-amber-300 text-xs sm:text-sm">
+                    <AlertCircle className="shrink-0 mt-0.5 text-amber-500" size={18} />
+                    <div>
+                      <p className="font-bold">মাস্টার ভিআইপি অ্যাক্সেস সক্রিয় রয়েছে!</p>
+                      <p className="mt-0.5 text-amber-700 dark:text-amber-400">
+                        এই শিক্ষার্থীর অ্যাকাউন্টে "অল-ইন-ওয়ান ভিআইপি এক্সেস" চালু থাকায় সে ওয়েবসাইটের সব প্যাকেজ ও পরীক্ষা আনলক দেখতে পাচ্ছে। আপনি যদি তাকে শুধু নির্দিষ্ট প্যাকেজ দিতে চান, তবে উপরের "ভিআইপি এক্সেস বাতিল করুন" বাটনে চাপ দিন এবং নিচে তার নির্দিষ্ট প্যাকেজটি চালু রাখুন।
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 1. Package-Level Unlocks */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                      <Package size={17} className="text-primary-light dark:text-primary-dark" />
+                      ১. প্যাকেজভিত্তিক অ্যাক্সেস ({allPackages.length}টি প্যাকেজ তৈরি আছে)
+                    </h4>
+                    <span className="text-xs text-gray-500">
+                      আনলক করা আছে: <strong className="text-primary-light dark:text-primary-dark">{toBengaliNumber((foundUser.unlockedPackages || []).length)}</strong>টি
+                    </span>
+                  </div>
+
+                  {allPackages.length === 0 ? (
+                    <p className="text-xs text-gray-400 bg-gray-50 dark:bg-gray-800/40 p-4 rounded-xl">
+                      এখনও কোনো প্যাকেজ তৈরি করা হয়নি। "প্যাকেজ ও ছবি পরিচালনা" মেনু থেকে নতুন প্যাকেজ তৈরি করুন।
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {allPackages.map(pkg => {
+                        const isUnlocked = Array.isArray(foundUser.unlockedPackages) && foundUser.unlockedPackages.includes(pkg.id);
+                        return (
+                          <div 
+                            key={pkg.id} 
+                            className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
+                              isUnlocked 
+                                ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/50' 
+                                : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-200 dark:border-gray-800'
+                            }`}
+                          >
+                            <div className="mb-3">
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <h5 className="font-bold text-sm text-gray-900 dark:text-white line-clamp-1">
+                                  {pkg.title}
+                                </h5>
+                                {isUnlocked ? (
+                                  <span className="text-[11px] font-bold px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-md shrink-0 flex items-center gap-1">
+                                    <CheckCircle2 size={11} /> কেনা আছে (Active)
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] font-bold px-2 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-md shrink-0 flex items-center gap-1">
+                                    <Lock size={11} /> লকড
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-primary-light dark:text-primary-dark font-semibold">
+                                ৳ {toBengaliNumber(pkg.price)}
+                              </p>
+                              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
+                                অন্তর্ভুক্ত: {toBengaliNumber(pkg.includedExams?.length || 0)}টি পরীক্ষা ও {toBengaliNumber(pkg.includedResources?.length || 0)}টি রিসোর্স
+                              </p>
+                            </div>
+
+                            <button
+                              onClick={() => togglePackageAccess(pkg.id)}
+                              disabled={updatingAccess}
+                              className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm disabled:opacity-60 ${
+                                isUnlocked
+                                  ? 'bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 dark:bg-red-950/30 dark:border-red-800 dark:text-red-400'
+                                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                              }`}
+                            >
+                              {isUnlocked ? (
+                                <><Unlock size={14} /> প্যাকেজ অ্যাক্সেস বন্ধ করুন</>
+                              ) : (
+                                <><Lock size={14} /> এই প্যাকেজটি আনলক করুন</>
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-gray-100 dark:border-gray-800" />
+
+                {/* 2. Specific Individual Exam Access */}
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                      <BookOpen size={17} className="text-primary-light dark:text-primary-dark" />
+                      ২. একক পরীক্ষা আনলক (Individual Exam Access)
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      শিক্ষার্থী কোনো পুরো প্যাকেজ ছাড়া শুধুমাত্র একটি নির্দিষ্ট পরীক্ষা দিতে চাইলে এখান থেকে আনলক করুন।
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <select
+                      value={selectedExamToUnlock}
+                      onChange={(e) => setSelectedExamToUnlock(e.target.value)}
+                      className="flex-grow p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-light dark:text-white"
+                    >
+                      {exams.map(ex => (
+                        <option key={ex.id} value={ex.id}>
+                          {ex.title} {ex.category ? `(${ex.category})` : ''}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      onClick={handleAddExamAccess}
+                      disabled={updatingAccess || !selectedExamToUnlock}
+                      className="px-5 py-2.5 bg-primary-light hover:bg-primary-dark text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 shrink-0 shadow-sm disabled:opacity-60"
+                    >
+                      <Plus size={15} /> পরীক্ষা আনলক করুন
+                    </button>
+                  </div>
+
+                  {/* Unlocked Exams List */}
+                  <div>
+                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 block mb-2">
+                      সরাসরি আনলক করা একক পরীক্ষাসমূহ ({toBengaliNumber((foundUser.unlockedExams || []).length)}টি):
+                    </span>
+                    {(foundUser.unlockedExams || []).length === 0 ? (
+                      <p className="text-xs text-gray-400 italic bg-gray-50 dark:bg-gray-800/30 p-2.5 rounded-lg">
+                        সরাসরি কোনো একক পরীক্ষা আনলক করা নেই।
+                      </p>
                     ) : (
-                      <><UserCheck size={18} /> পেইড এক্সেস দিন</>
+                      <div className="flex flex-wrap gap-2">
+                        {(foundUser.unlockedExams || []).map((examId: string) => {
+                          const examObj = exams.find(e => e.id === examId);
+                          return (
+                            <span 
+                              key={examId}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 text-xs font-medium"
+                            >
+                              <BookOpen size={13} />
+                              <span className="line-clamp-1 max-w-[200px]">{examObj?.title || examId}</span>
+                              <button
+                                onClick={() => handleRemoveExamAccess(examId)}
+                                disabled={updatingAccess}
+                                title="লক করুন"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/50 p-0.5 rounded-md transition-colors"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
                     )}
-                  </button>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-100 dark:border-gray-800" />
+
+                {/* 3. Specific Individual Resource Access */}
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                      <FileText size={17} className="text-primary-light dark:text-primary-dark" />
+                      ৩. একক পিডিএফ / রিসোর্স আনলক (Individual Resource Access)
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      শিক্ষার্থী কোনো নির্দিষ্ট লেকচার শিট বা পিডিএফ দেখতে চাইলে এখান থেকে আনলক করুন।
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <select
+                      value={selectedResourceToUnlock}
+                      onChange={(e) => setSelectedResourceToUnlock(e.target.value)}
+                      className="flex-grow p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs sm:text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-light dark:text-white"
+                    >
+                      {allResources.map(res => (
+                        <option key={res.id} value={res.id}>
+                          {res.title} {res.category ? `(${res.category})` : ''} - {res.type || 'পিডিএফ'}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      onClick={handleAddResourceAccess}
+                      disabled={updatingAccess || !selectedResourceToUnlock}
+                      className="px-5 py-2.5 bg-primary-light hover:bg-primary-dark text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 shrink-0 shadow-sm disabled:opacity-60"
+                    >
+                      <Plus size={15} /> রিসোর্স আনলক করুন
+                    </button>
+                  </div>
+
+                  {/* Unlocked Resources List */}
+                  <div>
+                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 block mb-2">
+                      সরাসরি আনলক করা একক রিসোর্সসমূহ ({toBengaliNumber((foundUser.unlockedResources || []).length)}টি):
+                    </span>
+                    {(foundUser.unlockedResources || []).length === 0 ? (
+                      <p className="text-xs text-gray-400 italic bg-gray-50 dark:bg-gray-800/30 p-2.5 rounded-lg">
+                        সরাসরি কোনো একক রিসোর্স আনলক করা নেই।
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {(foundUser.unlockedResources || []).map((resId: string) => {
+                          const resObj = allResources.find(r => r.id === resId);
+                          return (
+                            <span 
+                              key={resId}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 text-xs font-medium"
+                            >
+                              <FileText size={13} />
+                              <span className="line-clamp-1 max-w-[200px]">{resObj?.title || resId}</span>
+                              <button
+                                onClick={() => handleRemoveResourceAccess(resId)}
+                                disabled={updatingAccess}
+                                title="লক করুন"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/50 p-0.5 rounded-md transition-colors"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 

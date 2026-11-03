@@ -7,6 +7,7 @@ import { Package, Lock, CheckCircle2, Plus, Sparkles, BookOpen, FileText } from 
 import { Link } from 'react-router-dom';
 import PaymentModal from '../components/PaymentModal';
 import { formatImageUrl } from '../lib/imageUtils';
+import { isPackageUnlocked } from '../lib/accessControl';
 
 interface CoursePackage {
   id: string;
@@ -224,10 +225,10 @@ export default function Packages() {
                 </div>
 
                 <div className="pt-4 mt-auto border-t border-gray-100 dark:border-gray-800">
-                  {userData?.hasPaidAccess ? (
+                  {isPackageUnlocked(pkg.id, userData) ? (
                     <button 
                       disabled
-                      className="w-full py-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed text-sm"
+                      className="w-full py-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl font-bold flex items-center justify-center gap-2 cursor-default text-sm"
                     >
                       <CheckCircle2 size={18} /> প্যাকেজটি আপনার কেনা আছে
                     </button>
