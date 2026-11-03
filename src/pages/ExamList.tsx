@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import PaymentModal from '../components/PaymentModal';
 import { isExamUnlocked, type PackageAccessItem } from '../lib/accessControl';
+import { useLanguage } from '../context/LanguageContext';
 
 interface Exam {
   id: string;
@@ -40,6 +41,7 @@ interface Exam {
 
 export default function ExamList() {
   const { userData, role } = useAuth();
+  const { language, toLangNumber, t } = useLanguage();
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -261,8 +263,8 @@ export default function ExamList() {
             <CheckCircle2 size={24} className="text-white" />
           </div>
           <div>
-            <h4 className="font-bold text-base sm:text-lg">কোর্সে যুক্ত হওয়ার জন্য ধন্যবাদ! 🎯</h4>
-            <p className="text-white/90 text-xs sm:text-sm">এক্সক্লুসিভ ম্যাটেরিয়ালস ও লেটেস্ট আপডেট পেতে টেলিগ্রাম চ্যানেলে জয়েন করুন।</p>
+            <h4 className="font-bold text-base sm:text-lg">{t('telegramNoticeTitle')}</h4>
+            <p className="text-white/90 text-xs sm:text-sm">{t('telegramNoticeSub')}</p>
           </div>
         </div>
         <a
@@ -271,7 +273,7 @@ export default function ExamList() {
           rel="noopener noreferrer"
           className="shrink-0 px-5 py-2.5 bg-white text-emerald-700 hover:bg-emerald-50 font-bold rounded-xl text-sm flex items-center gap-2 shadow-sm transition-all hover:scale-105"
         >
-          <Send size={16} /> Join Telegram
+          <Send size={16} /> {t('joinTelegram')}
         </a>
       </div>
 
@@ -280,12 +282,12 @@ export default function ExamList() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-heading font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Layers className="text-primary-light dark:text-primary-dark" size={28} />
-            {currentPath.length === 0 ? 'পরীক্ষা ও ফোল্ডারসমূহ' : currentPath[currentPath.length - 1]}
+            {currentPath.length === 0 ? t('examsAndFolders') : currentPath[currentPath.length - 1]}
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             {currentPath.length === 0 
-              ? 'বিষয় ও ক্যাটাগরি অনুযায়ী সাজানো ফোল্ডার থেকে আপনার পরীক্ষাটি বেছে নিন'
-              : `${currentPath.join(' / ')} ফোল্ডারের অন্তর্ভুক্ত পরীক্ষাসমূহ`}
+              ? t('folderViewSubtitle')
+              : `${currentPath.join(' / ')}`}
           </p>
         </div>
 
@@ -297,7 +299,7 @@ export default function ExamList() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="যেকোনো পরীক্ষা বা বিষয় খুঁজুন..."
+              placeholder={t('searchExams')}
               className="w-full pl-10 pr-9 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-light/40 dark:text-white transition-all shadow-sm"
             />
             {searchQuery && (
@@ -320,7 +322,7 @@ export default function ExamList() {
                     : 'text-gray-600 dark:text-gray-400'
                 }`}
               >
-                ফোল্ডার ভিউ
+                {t('folderView')}
               </button>
               <button
                 onClick={() => setViewMode('all')}
@@ -330,14 +332,14 @@ export default function ExamList() {
                     : 'text-gray-600 dark:text-gray-400'
                 }`}
               >
-                সকল পরীক্ষা
+                {t('allExams')}
               </button>
             </div>
 
             <button
               onClick={() => fetchExams(true)}
               disabled={isRefreshing}
-              title="নতুন কোনো পরীক্ষা যোগ হলে রিফ্রেশ করুন"
+              title={language === 'bn' ? "নতুন কোনো পরীক্ষা যোগ হলে রিফ্রেশ করুন" : "Refresh exam list"}
               className="p-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-500 hover:text-primary-light dark:hover:text-primary-dark transition-all hover:bg-gray-50 dark:hover:bg-gray-800 shrink-0 flex items-center justify-center disabled:opacity-50"
             >
               <RotateCcw size={16} className={isRefreshing ? 'animate-spin text-primary-light dark:text-primary-dark' : ''} />
@@ -346,7 +348,7 @@ export default function ExamList() {
         </div>
       </div>
 
-      {/* Navigation Bar / Breadcrumbs (Screenshot 2, 3, 4 Style) */}
+      {/* Navigation Bar / Breadcrumbs */}
       {!searchQuery && viewMode === 'folder' && (
         <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-gray-900 px-5 py-3.5 rounded-2xl border border-gray-100 dark:border-gray-800 mb-8 shadow-sm">
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
@@ -355,7 +357,7 @@ export default function ExamList() {
                 onClick={goBack}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-medium transition-colors mr-2"
               >
-                <ArrowLeft size={16} /> ফিরে যান
+                <ArrowLeft size={16} /> {t('goBack')}
               </button>
             )}
 
@@ -365,7 +367,7 @@ export default function ExamList() {
                 currentPath.length === 0 ? 'text-primary-light dark:text-primary-dark font-bold' : ''
               }`}
             >
-              সকল ফোল্ডার
+              {t('allFolders')}
             </button>
 
             {currentPath.map((seg, idx) => (
@@ -551,32 +553,32 @@ export default function ExamList() {
         {/* Top Badges */}
         <div className="flex justify-between items-start mb-4">
           <span className="text-[11px] font-semibold px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full line-clamp-1 max-w-[60%]">
-            {exam.category || 'সাধারণ'}
+            {exam.category || (language === 'bn' ? 'সাধারণ' : 'General')}
           </span>
 
           {isExamInProgress ? (
             <span className="text-xs font-bold px-3 py-1 bg-amber-500 text-white rounded-full flex items-center gap-1.5 shadow-sm shadow-amber-500/20">
               <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-              চলমান পরীক্ষা
+              {t('inProgressExam')}
             </span>
           ) : exam.isPaid ? (
             isUnlocked ? (
               <span className="text-xs font-bold px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-1">
-                <CheckCircle2 size={12} /> PURCHASED
+                <CheckCircle2 size={12} /> {t('purchased')}
               </span>
             ) : (
               <span className="text-xs font-bold px-3 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-full border border-amber-200/60 dark:border-amber-800/40 flex items-center gap-1">
-                <Lock size={12} /> পেইড
+                <Lock size={12} /> {t('paid')}
               </span>
             )
           ) : (
             <span className="text-xs font-bold px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">
-              FREE
+              {t('free')}
             </span>
           )}
         </div>
 
-        {/* Center Document Icon (Screenshots 3 & 4) */}
+        {/* Center Document Icon */}
         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-105 transition-transform duration-300 ${
           isExamInProgress
             ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400'
@@ -601,11 +603,11 @@ export default function ExamList() {
         <div className="flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-6">
           <div className="flex items-center gap-1 font-medium">
             <Clock size={15} className="text-gray-400" />
-            <span>{exam.timeLimit} মি.</span>
+            <span>{toLangNumber(exam.timeLimit)} {t('minute')}</span>
           </div>
           <div className="flex items-center gap-1 font-medium">
             <Award size={15} className="text-gray-400" />
-            <span>{totalMarks} নম্বর</span>
+            <span>{toLangNumber(totalMarks)} {t('marks')}</span>
           </div>
           <div className="flex items-center">
             <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${
@@ -613,7 +615,7 @@ export default function ExamList() {
                 ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' 
                 : 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800'
             }`}>
-              {exam.negativeMarking === 0 ? 'নেগেটিভ নেই (০)' : `নেগেটিভ -${exam.negativeMarking ?? 0.25}`}
+              {exam.negativeMarking === 0 ? t('noNegative') : `${t('negative')} -${toLangNumber(exam.negativeMarking ?? 0.25)}`}
             </span>
           </div>
         </div>
@@ -625,7 +627,7 @@ export default function ExamList() {
               onClick={() => setShowPaymentModal(true)}
               className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm transition-all"
             >
-              <Lock size={18} /> আনলক করুন
+              <Lock size={18} /> {t('unlock')}
             </button>
           ) : (
             <Link
@@ -636,7 +638,7 @@ export default function ExamList() {
                   : 'bg-primary-light hover:bg-primary-dark text-white'
               }`}
             >
-              <PlayCircle size={18} /> {isExamInProgress ? 'Continue Exam →' : 'Start Exam →'}
+              <PlayCircle size={18} /> {isExamInProgress ? t('continueExam') : t('startExam')}
             </Link>
           )}
 
@@ -646,7 +648,7 @@ export default function ExamList() {
               to={`/leaderboard/${exam.id}`}
               className="text-gray-500 hover:text-primary-light dark:hover:text-primary-dark font-medium flex items-center gap-1 transition-colors"
             >
-              <Award size={13} className="text-amber-500" /> মেধা তালিকা
+              <Award size={13} className="text-amber-500" /> {t('meritList')}
             </Link>
 
             {(role === 'owner' || role === 'assistant') && (
@@ -654,7 +656,7 @@ export default function ExamList() {
                 onClick={(e) => handleDeleteExam(exam.id, e)}
                 className="flex items-center gap-1 text-red-500 hover:text-red-700 hover:underline transition-colors"
               >
-                <Trash2 size={13} /> পরীক্ষা ডিলিট
+                <Trash2 size={13} /> {t('delete')}
               </button>
             )}
           </div>

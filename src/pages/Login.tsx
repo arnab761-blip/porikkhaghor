@@ -14,9 +14,11 @@ import {
   ArrowRight, 
   CheckCircle2
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Login() {
   const { signInWithGoogle, signInAsGuest, signInWithEmail, signUpWithEmail, resetPassword } = useAuth();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
 
   // Mode: 'login' | 'register' | 'forgot'
@@ -38,23 +40,23 @@ export default function Login() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Format Firebase Error to Bangla
+  // Format Firebase Error
   const formatAuthError = (err: any) => {
     const code = err?.code || '';
     if (code.includes('user-not-found')) {
-      return 'এই ইমেইল দিয়ে কোনো অ্যাকাউন্ট পাওয়া যায়নি। আগে রেজিস্ট্রেশন করুন।';
+      return language === 'bn' ? 'এই ইমেইল দিয়ে কোনো অ্যাকাউন্ট পাওয়া যায়নি। আগে রেজিস্ট্রেশন করুন।' : 'No account found with this email. Please register first.';
     } else if (code.includes('wrong-password') || code.includes('invalid-credential')) {
-      return 'ভুল পাসওয়ার্ড অথবা ইমেইল! অনুগ্রহ করে সঠিক তথ্য দিয়ে চেষ্টা করুন।';
+      return language === 'bn' ? 'ভুল পাসওয়ার্ড অথবা ইমেইল! অনুগ্রহ করে সঠিক তথ্য দিয়ে চেষ্টা করুন।' : 'Incorrect password or email. Please check your credentials.';
     } else if (code.includes('email-already-in-use')) {
-      return 'এই ইমেইল দিয়ে ইতোমধ্যে একটি অ্যাকাউন্ট রয়েছে। সরাসরি লগইন করুন।';
+      return language === 'bn' ? 'এই ইমেইল দিয়ে ইতোমধ্যে একটি অ্যাকাউন্ট রয়েছে। সরাসরি লগইন করুন।' : 'An account already exists with this email. Please log in directly.';
     } else if (code.includes('weak-password')) {
-      return 'পাসওয়ার্ডটি খুবই দুর্বল। কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড দিন।';
+      return language === 'bn' ? 'পাসওয়ার্ডটি খুবই দুর্বল। কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড দিন।' : 'Password is too weak. Minimum 6 characters required.';
     } else if (code.includes('invalid-email')) {
-      return 'একটি সঠিক ইমেইল অ্যাড্রেস লিখুন।';
+      return language === 'bn' ? 'একটি সঠিক ইমেইল অ্যাড্রেস লিখুন।' : 'Please enter a valid email address.';
     } else if (code.includes('popup-closed-by-user')) {
-      return 'গুগল সাইন-ইন উইন্ডো বন্ধ করা হয়েছে। আবার চেষ্টা করুন।';
+      return language === 'bn' ? 'গুগল সাইন-ইন উইন্ডো বন্ধ করা হয়েছে। আবার চেষ্টা করুন।' : 'Google sign-in popup was closed. Please try again.';
     }
-    return err?.message || 'লগইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।';
+    return err?.message || (language === 'bn' ? 'লগইন করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।' : 'An authentication error occurred. Please try again.');
   };
 
   const handleGoogleLogin = async () => {
@@ -78,7 +80,7 @@ export default function Login() {
       await signInAsGuest();
       navigate('/dashboard');
     } catch (err: any) {
-      setError("গেস্ট লগইনে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+      setError(language === 'bn' ? 'গেস্ট লগইনে সমস্যা হয়েছে। আবার চেষ্টা করুন।' : 'Error logging in as guest. Please try again.');
       setIsLoading(false);
     }
   };
@@ -86,7 +88,7 @@ export default function Login() {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password) {
-      setError('ইমেইল ও পাসওয়ার্ড উভয়ই প্রদান করুন।');
+      setError(language === 'bn' ? 'ইমেইল ও পাসওয়ার্ড উভয়ই প্রদান করুন।' : 'Please enter both email and password.');
       return;
     }
     try {
@@ -104,23 +106,23 @@ export default function Login() {
   const handleEmailRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError('আপনার পুরো নাম লিখুন।');
+      setError(language === 'bn' ? 'আপনার পুরো নাম লিখুন।' : 'Please enter your full name.');
       return;
     }
     if (!email.trim()) {
-      setError('আপনার ইমেইল অ্যাড্রেস লিখুন।');
+      setError(language === 'bn' ? 'আপনার ইমেইল অ্যাড্রেস লিখুন।' : 'Please enter your email address.');
       return;
     }
     if (!phone.trim()) {
-      setError('আপনার সচল মোবাইল নম্বর লিখুন।');
+      setError(language === 'bn' ? 'আপনার সচল মোবাইল নম্বর লিখুন।' : 'Please enter your mobile phone number.');
       return;
     }
     if (password.length < 6) {
-      setError('পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।');
+      setError(language === 'bn' ? 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'Password must be at least 6 characters long.');
       return;
     }
     if (password !== confirmPassword) {
-      setError('পাসওয়ার্ড ও কনফার্ম পাসওয়ার্ড মিলছে না।');
+      setError(language === 'bn' ? 'পাসওয়ার্ড ও কনফার্ম পাসওয়ার্ড মিলছে না।' : 'Passwords do not match.');
       return;
     }
 
@@ -139,7 +141,7 @@ export default function Login() {
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
-      setError('পাসওয়ার্ড রিকভারির জন্য আপনার নিবন্ধিত ইমেইলটি লিখুন।');
+      setError(language === 'bn' ? 'পাসওয়ার্ড রিকভারির জন্য আপনার নিবন্ধিত ইমেইলটি লিখুন।' : 'Please enter your registered email.');
       return;
     }
     try {
@@ -147,7 +149,7 @@ export default function Login() {
       setError(null);
       setSuccess(null);
       await resetPassword(email);
-      setSuccess('পাসওয়ার্ড রিসেটের লিংক আপনার ইমেইলে পাঠানো হয়েছে! ইনবক্স অথবা স্প্যাম (Spam) ফোল্ডার চেক করুন।');
+      setSuccess(language === 'bn' ? 'পাসওয়ার্ড রিসেটের লিংক আপনার ইমেইলে পাঠানো হয়েছে! ইনবক্স অথবা স্প্যাম (Spam) ফোল্ডার চেক করুন।' : 'Password reset link sent! Check your inbox or spam folder.');
       setIsLoading(false);
     } catch (err: any) {
       setError(formatAuthError(err));
@@ -165,14 +167,14 @@ export default function Login() {
       {/* Header */}
       <div className="text-center mb-6">
         <h1 className="text-2xl sm:text-3xl font-heading font-bold text-gray-900 dark:text-white mb-2">
-          {authMode === 'login' ? 'অ্যাকাউন্টে লগইন' : authMode === 'register' ? 'নতুন শিক্ষার্থী রেজিস্ট্রেশন' : 'পাসওয়ার্ড পুনরুদ্ধার'}
+          {authMode === 'login' ? t('loginHeading') : authMode === 'register' ? t('registerHeading') : t('forgotHeading')}
         </h1>
         <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
           {authMode === 'login' 
-            ? 'পরীক্ষা দিতে ও প্রস্তুতি নিতে আপনার অ্যাকাউন্টে প্রবেশ করুন' 
+            ? t('loginSubtitle') 
             : authMode === 'register' 
-            ? 'সহজেই অ্যাকাউন্ট খুলে নিজের প্রস্তুতি শুরু করুন' 
-            : 'নিবন্ধিত ইমেইলে পাসওয়ার্ড রিসেট লিংক পাঠিয়ে দেওয়া হবে'}
+            ? t('registerSubtitle') 
+            : t('forgotSubtitle')}
         </p>
       </div>
 
@@ -188,7 +190,7 @@ export default function Login() {
                 : 'text-gray-500 hover:text-gray-800 dark:text-gray-400'
             }`}
           >
-            লগইন করুন
+            {t('signInTab')}
           </button>
           <button
             type="button"
@@ -199,7 +201,7 @@ export default function Login() {
                 : 'text-gray-500 hover:text-gray-800 dark:text-gray-400'
             }`}
           >
-            নতুন অ্যাকাউন্ট
+            {t('signUpTab')}
           </button>
         </div>
       )}
@@ -234,7 +236,7 @@ export default function Login() {
             {/* Email Field */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                ইমেইল অ্যাড্রেস
+                {t('emailLabel')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -253,14 +255,14 @@ export default function Login() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                  পাসওয়ার্ড
+                  {t('passwordLabel')}
                 </label>
                 <button
                   type="button"
                   onClick={() => { setAuthMode('forgot'); setError(null); setSuccess(null); }}
                   className="text-xs text-primary-light dark:text-primary-dark font-medium hover:underline"
                 >
-                  পাসওয়ার্ড মনে নেই?
+                  {t('forgotPasswordLink')}
                 </button>
               </div>
               <div className="relative">
@@ -269,7 +271,7 @@ export default function Login() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="আপনার পাসওয়ার্ড লিখুন"
+                  placeholder={language === 'bn' ? 'আপনার পাসওয়ার্ড লিখুন' : 'Enter your password'}
                   className="w-full pl-10 pr-11 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-primary-light text-sm dark:text-white"
                   required
                 />
@@ -277,7 +279,7 @@ export default function Login() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1"
-                  title={showPassword ? "পাসওয়ার্ড লুকান" : "পাসওয়ার্ড দেখুন"}
+                  title={showPassword ? (language === 'bn' ? "পাসওয়ার্ড লুকান" : "Hide password") : (language === 'bn' ? "পাসওয়ার্ড দেখুন" : "Show password")}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -289,7 +291,7 @@ export default function Login() {
               disabled={isLoading}
               className="w-full py-3.5 bg-primary-light hover:bg-primary-dark text-white rounded-2xl font-bold transition-all shadow-md flex items-center justify-center gap-2 text-sm disabled:opacity-60"
             >
-              {isLoading ? 'লগইন হচ্ছে...' : 'লগইন করুন'} <ArrowRight size={16} />
+              {isLoading ? (language === 'bn' ? 'লগইন হচ্ছে...' : 'Signing in...') : t('submitLoginBtn')} <ArrowRight size={16} />
             </button>
           </motion.form>
         )}
@@ -307,7 +309,7 @@ export default function Login() {
             {/* Full Name */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                আপনার পুরো নাম
+                {t('fullNameLabel')}
               </label>
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -315,7 +317,7 @@ export default function Login() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="যেমন: মোহাম্মদ রাফি"
+                  placeholder={language === 'bn' ? "যেমন: মোহাম্মদ রাফি" : "e.g. John Doe"}
                   className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-primary-light text-sm dark:text-white"
                   required
                 />
@@ -325,7 +327,7 @@ export default function Login() {
             {/* Email */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                ইমেইল অ্যাড্রেস
+                {t('emailLabel')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -343,7 +345,7 @@ export default function Login() {
             {/* Mobile Phone Number */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                মোবাইল নম্বর
+                {t('phoneLabel')}
               </label>
               <div className="relative">
                 <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -351,7 +353,7 @@ export default function Login() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="০১৭xxxxxxxx"
+                  placeholder="017xxxxxxxx"
                   className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-primary-light text-sm dark:text-white"
                   required
                 />
@@ -361,7 +363,7 @@ export default function Login() {
             {/* Password */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)
+                {t('passwordLabel')} {language === 'bn' ? '(কমপক্ষে ৬ অক্ষর)' : '(Min. 6 characters)'}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -369,7 +371,7 @@ export default function Login() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="একটি শক্তিশালী পাসওয়ার্ড দিন"
+                  placeholder={language === 'bn' ? "একটি শক্তিশালী পাসওয়ার্ড দিন" : "Enter a secure password"}
                   className="w-full pl-10 pr-11 py-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-primary-light text-sm dark:text-white"
                   required
                 />
@@ -386,7 +388,7 @@ export default function Login() {
             {/* Confirm Password */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                পাসওয়ার্ড নিশ্চিত করুন
+                {t('confirmPasswordLabel')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -394,7 +396,7 @@ export default function Login() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="পাসওয়ার্ডটি পুনরায় লিখুন"
+                  placeholder={language === 'bn' ? "পাসওয়ার্ডটি পুনরায় লিখুন" : "Confirm your password"}
                   className="w-full pl-10 pr-11 py-2.5 rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 focus:outline-none focus:ring-2 focus:ring-primary-light text-sm dark:text-white"
                   required
                 />
@@ -413,7 +415,7 @@ export default function Login() {
               disabled={isLoading}
               className="w-full mt-2 py-3 bg-primary-light hover:bg-primary-dark text-white rounded-2xl font-bold transition-all shadow-md flex items-center justify-center gap-2 text-sm disabled:opacity-60"
             >
-              {isLoading ? 'অ্যাকাউন্ট তৈরি হচ্ছে...' : 'রেজিস্ট্রেশন সম্পন্ন করুন'} <ArrowRight size={16} />
+              {isLoading ? (language === 'bn' ? 'অ্যাকাউন্ট তৈরি হচ্ছে...' : 'Creating account...') : t('submitRegisterBtn')} <ArrowRight size={16} />
             </button>
           </motion.form>
         )}
@@ -430,7 +432,7 @@ export default function Login() {
           >
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-                আপনার নিবন্ধিত ইমেইল
+                {t('emailLabel')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={17} />
@@ -444,7 +446,9 @@ export default function Login() {
                 />
               </div>
               <p className="text-[11px] text-gray-500 mt-1.5">
-                এই ইমেইলে একটি পাসওয়ার্ড রিসেট লিংক পাঠানো হবে। সেই লিংকে চাপ দিয়ে আপনি নতুন পাসওয়ার্ড সেট করে নিতে পারবেন।
+                {language === 'bn' 
+                  ? 'এই ইমেইলে একটি পাসওয়ার্ড রিসেট লিংক পাঠানো হবে। সেই লিংকে চাপ দিয়ে আপনি নতুন পাসওয়ার্ড সেট করে নিতে পারবেন।' 
+                  : 'A password reset link will be sent to this email address to reset your password.'}
               </p>
             </div>
 
@@ -453,7 +457,7 @@ export default function Login() {
               disabled={isLoading}
               className="w-full py-3.5 bg-primary-light hover:bg-primary-dark text-white rounded-2xl font-bold transition-all shadow-md flex items-center justify-center gap-2 text-sm disabled:opacity-60"
             >
-              {isLoading ? 'লিংক পাঠানো হচ্ছে...' : 'রিসেট লিংক পাঠান'} <ArrowRight size={16} />
+              {isLoading ? (language === 'bn' ? 'লিংক পাঠানো হচ্ছে...' : 'Sending link...') : t('sendResetLinkBtn')} <ArrowRight size={16} />
             </button>
 
             <button
@@ -461,7 +465,7 @@ export default function Login() {
               onClick={() => { setAuthMode('login'); setError(null); setSuccess(null); }}
               className="w-full py-2.5 text-xs text-gray-600 dark:text-gray-400 hover:text-primary-light font-semibold transition-colors"
             >
-              ← লগইন পেজে ফিরে যান
+              {t('backToLoginBtn')}
             </button>
           </motion.form>
         )}
@@ -470,7 +474,7 @@ export default function Login() {
       {/* Divider */}
       <div className="relative flex items-center py-5">
         <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
-        <span className="flex-shrink-0 px-3 text-gray-400 text-xs">অথবা অন্যান্য মাধ্যমে লগইন</span>
+        <span className="flex-shrink-0 px-3 text-gray-400 text-xs">{t('orOtherMethods')}</span>
         <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
       </div>
 
@@ -501,7 +505,7 @@ export default function Login() {
               fill="#EA4335"
             />
           </svg>
-          Google দিয়ে এক-ক্লিকে লগইন
+          {t('googleSignInBtn')}
         </button>
 
         {/* Guest Login Button */}
@@ -512,12 +516,14 @@ export default function Login() {
           className="w-full flex items-center justify-center gap-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 py-2.5 px-4 rounded-2xl font-medium transition-all text-xs sm:text-sm disabled:opacity-50"
         >
           <UserCircle size={18} />
-          গেস্ট হিসেবে পরীক্ষা দিন (Guest)
+          {t('guestSignInBtn')}
         </button>
       </div>
 
       <p className="mt-6 text-center text-xs text-gray-400 dark:text-gray-500">
-        গেস্ট অ্যাকাউন্টের রেজাল্ট পরবর্তীতে ইমেইল বা গুগল দিয়ে যুক্ত হলে একাউন্টে সংরক্ষিত হবে।
+        {language === 'bn' 
+          ? 'গেস্ট অ্যাকাউন্টের রেজাল্ট পরবর্তীতে ইমেইল বা গুগল দিয়ে যুক্ত হলে একাউন্টে সংরক্ষিত হবে।' 
+          : 'Guest attempt results will be linked when you sign in with Google or Email.'}
       </p>
     </motion.div>
   );

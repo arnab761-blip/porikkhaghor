@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import QuestionDiscussion from '../components/forum/QuestionDiscussion';
 import { MathText } from '../components/MathText';
 import { getCorrectAnswerIndex } from '../lib/questionUtils';
+import { useLanguage } from '../context/LanguageContext';
 
 interface Mistake {
   examId: string;
@@ -22,6 +23,7 @@ interface Mistake {
 
 export default function MistakeBank() {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const [mistakes, setMistakes] = useState<Mistake[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -86,23 +88,23 @@ export default function MistakeBank() {
     fetchMistakes();
   }, [user]);
 
-  if (loading) return <div className="p-8 text-center text-gray-500 dark:text-gray-400">লোড হচ্ছে...</div>;
+  if (loading) return <div className="p-8 text-center text-gray-500 dark:text-gray-400">{t('loading')}</div>;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto pb-12">
       <div className="mb-8">
         <h1 className="text-3xl font-heading font-bold text-error-light dark:text-error-dark flex items-center gap-3">
-          <XCircle size={32} /> ভুল উত্তরের ডায়েরি (Mistake Bank)
+          <XCircle size={32} /> {t('mistakeBankHeading')}
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
-          আপনার সমস্ত পরীক্ষার ভুল উত্তরগুলো এখানে সংরক্ষিত আছে। এগুলো বারবার চর্চা করে নিজের ভুল শুধরে নিন।
+          {t('mistakeBankSubtitle')}
         </p>
       </div>
 
       {mistakes.length === 0 ? (
         <div className="text-center p-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
           <BookOpen size={48} className="mx-auto text-green-300 dark:text-green-700 mb-4" />
-          <h2 className="text-xl font-medium text-gray-500 dark:text-gray-400">আপনার কোনো ভুল উত্তর নেই! দারুণ কাজ!</h2>
+          <h2 className="text-xl font-medium text-gray-500 dark:text-gray-400">{t('noMistakesYet')}</h2>
         </div>
       ) : (
         <div className="space-y-6">
@@ -110,10 +112,10 @@ export default function MistakeBank() {
             <div key={idx} className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border-2 border-red-100 dark:border-red-900/30">
               <div className="flex justify-between items-start mb-4">
                 <span className="text-xs font-medium px-2.5 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded-md">
-                  পরীক্ষা: {m.examTitle}
+                  {language === 'bn' ? 'পরীক্ষা:' : 'Exam:'} {m.examTitle}
                 </span>
                 <Link to={`/take-exam/${m.examId}`} className="text-xs flex items-center gap-1 text-primary-light dark:text-primary-dark hover:underline">
-                  পরীক্ষাটি আবার দিন <ChevronRight size={14} />
+                  {language === 'bn' ? 'পরীক্ষাটি আবার দিন' : 'Retake Exam'} <ChevronRight size={14} />
                 </Link>
               </div>
 
@@ -135,7 +137,7 @@ export default function MistakeBank() {
                     <div key={optIdx} className={`p-3 rounded-xl border ${optStyle} flex justify-between items-center gap-2`}>
                       <span className="flex-1"><MathText text={opt} /></span>
                       <span className="text-xs shrink-0 font-medium">
-                        {optIdx === m.userAnswer && "(আপনার উত্তর)"} {optIdx === m.correctAnswer && "(সঠিক উত্তর)"}
+                        {optIdx === m.userAnswer && `(${t('yourAnswer')})`} {optIdx === m.correctAnswer && `(${t('correctAnswer')})`}
                       </span>
                     </div>
                   );
@@ -144,7 +146,9 @@ export default function MistakeBank() {
 
               {m.explanation && (
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 rounded-xl text-sm border border-blue-100 dark:border-blue-900">
-                  <strong className="block mb-1 text-blue-800 dark:text-blue-300">ব্যাখ্যা:</strong>
+                  <strong className="block mb-1 text-blue-800 dark:text-blue-300">
+                    {language === 'bn' ? 'ব্যাখ্যা:' : 'Explanation:'}
+                  </strong>
                   <MathText text={m.explanation} />
                 </div>
               )}

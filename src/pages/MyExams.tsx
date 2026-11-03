@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { FileText, ArrowRight, Calendar, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -22,6 +23,7 @@ interface ExamResult {
 
 export default function MyExams() {
   const { user } = useAuth();
+  const { t, toLangNumber, formatDate } = useLanguage();
   const [results, setResults] = useState<ExamResult[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,29 +58,6 @@ export default function MyExams() {
     fetchResults();
   }, [user]);
 
-  const toBengaliNumber = (num: number | string) => {
-    if (num === null || num === undefined || num === '' || Number.isNaN(Number(num))) {
-      return '০';
-    }
-    const bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-    return num.toString().replace(/\d/g, (d) => bengaliDigits[parseInt(d)]);
-  };
-
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return 'অজানা সময়';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    };
-    // Format to Bengali string
-    let formatted = new Intl.DateTimeFormat('bn-BD', options).format(date);
-    return formatted;
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -92,25 +71,25 @@ export default function MyExams() {
       <div className="mb-8">
         <h1 className="text-3xl font-heading font-bold text-gray-900 dark:text-white flex items-center gap-3">
           <FileText size={32} className="text-primary-light dark:text-primary-dark" /> 
-          আমার পরীক্ষাগুলো
+          {t('myExams')}
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
-          এখানে আপনার দেওয়া সকল পরীক্ষার তালিকা এবং ফলাফল দেওয়া হলো।
+          {t('myExamsSubtitle')}
         </p>
       </div>
 
       {results.length === 0 ? (
         <div className="text-center p-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
           <FileText size={48} className="mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-          <h2 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">আপনি এখনো কোনো পরীক্ষা দেননি!</h2>
+          <h2 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">{t('noExamsTakenYet')}</h2>
           <p className="text-gray-500 dark:text-gray-400 mb-6">
-            পরীক্ষা দিয়ে নিজেকে যাচাই করতে আমাদের এক্সাম সেকশনে যান।
+            {t('noExamsTakenSubtitle')}
           </p>
           <Link 
             to="/exams"
             className="inline-flex items-center gap-2 px-6 py-3 bg-primary-light text-white rounded-xl font-medium hover:bg-primary-dark transition-colors"
           >
-            পরীক্ষা দিন
+            {t('takeAnExam')}
           </Link>
         </div>
       ) : (
@@ -140,7 +119,7 @@ export default function MyExams() {
                   <div className="flex-grow">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                       <span className="text-xs font-bold bg-primary-light/10 dark:bg-primary-dark/20 text-primary-light dark:text-primary-dark px-3 py-1 rounded-full">
-                        পরীক্ষা নং {toBengaliNumber(results.length - idx)}
+                        {t('examNo')} {toLangNumber(results.length - idx)}
                       </span>
                       <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                         <Calendar size={14} />
@@ -151,7 +130,7 @@ export default function MyExams() {
                         onClick={(e) => e.stopPropagation()}
                         className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 font-bold hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors"
                       >
-                        <Award size={12} /> মেধা তালিকা
+                        <Award size={12} /> {t('meritList')}
                       </Link>
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-primary-light dark:group-hover:text-primary-dark transition-colors">
@@ -162,11 +141,11 @@ export default function MyExams() {
                   <div className="flex items-center gap-6">
                     <div className="text-right">
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1 flex items-center justify-end gap-1">
-                        <Award size={14} /> প্রাপ্ত নম্বর
+                        <Award size={14} /> {t('obtainedScoreLabel')}
                       </p>
                       <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {toBengaliNumber(score)} 
-                        <span className="text-base font-normal text-gray-500 dark:text-gray-400"> / {toBengaliNumber(outOf)}</span>
+                        {toLangNumber(score)} 
+                        <span className="text-base font-normal text-gray-500 dark:text-gray-400"> / {toLangNumber(outOf)}</span>
                       </p>
                     </div>
                     <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-400 group-hover:bg-primary-light group-hover:text-white transition-colors">

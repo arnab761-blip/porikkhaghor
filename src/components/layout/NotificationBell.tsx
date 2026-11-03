@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { collection, query, where, onSnapshot, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { Bell, Check, ExternalLink, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -20,6 +21,7 @@ interface NotificationItem {
 
 export default function NotificationBell() {
   const { user, role } = useAuth();
+  const { t, toLangNumber } = useLanguage();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -100,8 +102,8 @@ export default function NotificationBell() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300"
-        title="নোটিফিকেশন"
-        aria-label="নোটিফিকেশন"
+        title={t('notificationsTitle')}
+        aria-label={t('notificationsTitle')}
       >
         <Bell size={20} />
         
@@ -127,10 +129,10 @@ export default function NotificationBell() {
             {/* Header */}
             <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/30">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-gray-900 dark:text-white">নোটিফিকেশন</span>
+                <span className="font-bold text-gray-900 dark:text-white">{t('notificationsTitle')}</span>
                 {unreadCount > 0 && (
                   <span className="text-xs bg-red-500 text-white font-bold px-2 py-0.5 rounded-full">
-                    {unreadCount}টি নতুন
+                    {toLangNumber(unreadCount)}{t('newNotificationsCount')}
                   </span>
                 )}
               </div>
@@ -139,7 +141,7 @@ export default function NotificationBell() {
                   onClick={markAllAsRead}
                   className="text-xs text-primary-light dark:text-primary-dark hover:underline flex items-center gap-1 font-medium"
                 >
-                  <Check size={14} /> সব পঠিত করুন
+                  <Check size={14} /> {t('markAllAsRead')}
                 </button>
               )}
             </div>
@@ -149,7 +151,7 @@ export default function NotificationBell() {
               {notifications.length === 0 ? (
                 <div className="p-8 text-center text-sm text-gray-400">
                   <MessageCircle size={32} className="mx-auto mb-2 opacity-50" />
-                  কোনো নতুন নোটিফিকেশন নেই
+                  {t('noNotifications')}
                 </div>
               ) : (
                 notifications.map((item) => (
@@ -172,7 +174,7 @@ export default function NotificationBell() {
                         onClick={() => setIsOpen(false)}
                         className="text-xs text-blue-600 dark:text-blue-400 hover:underline shrink-0 flex items-center gap-0.5"
                       >
-                        দেখুন <ExternalLink size={12} />
+                        {t('viewDetails')} <ExternalLink size={12} />
                       </Link>
                     </div>
                     <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">
@@ -180,7 +182,7 @@ export default function NotificationBell() {
                     </p>
                     {item.replyText && (
                       <div className="mt-2 text-xs bg-white dark:bg-gray-800 p-2.5 rounded-lg border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-200">
-                        <strong className="text-blue-600 dark:text-blue-400">শিক্ষক: </strong>
+                        <strong className="text-blue-600 dark:text-blue-400">{t('teacherSaid')}</strong>
                         {item.replyText}
                       </div>
                     )}
@@ -196,7 +198,7 @@ export default function NotificationBell() {
                 onClick={() => setIsOpen(false)}
                 className="text-xs font-bold text-primary-light dark:text-primary-dark hover:underline block"
               >
-                {role === 'owner' || role === 'assistant' ? 'শিক্ষার্থীদের সব ডাউট দেখুন →' : 'আমার সকল ডাউট ও প্রশ্ন দেখুন →'}
+                {role === 'owner' || role === 'assistant' ? t('viewAllDoubtsTeacher') : t('viewAllDoubtsStudent')}
               </Link>
             </div>
           </motion.div>

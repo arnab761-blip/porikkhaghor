@@ -3,6 +3,7 @@ import { X, MessageCircle, PhoneCall, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { useLanguage } from '../context/LanguageContext';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface PaymentModalProps {
 }
 
 export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
+  const { t, language } = useLanguage();
   const [teacherInfo, setTeacherInfo] = useState({
     name: 'মো. আব্দুল্লাহ',
     whatsappNumber: '+8801XXXXXXXXX',
@@ -65,14 +67,18 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-md">
               <CheckCircle2 size={32} />
             </div>
-            <h2 className="text-2xl font-bold font-heading mb-1">প্রিমিয়াম আনলক করুন</h2>
-            <p className="text-white/80 text-sm">এই কন্টেন্টটি দেখতে পেমেন্ট সম্পন্ন করুন</p>
+            <h2 className="text-2xl font-bold font-heading mb-1">{t('unlockPremiumTitle')}</h2>
+            <p className="text-white/80 text-sm">{t('unlockPremiumSubtitle')}</p>
           </div>
 
           {/* Body */}
           <div className="p-6">
             <p className="text-gray-600 dark:text-gray-400 text-sm text-center mb-6 leading-relaxed">
-              পেইড পরীক্ষা বা পিডিএফগুলোর অ্যাক্সেস পেতে নিচের যেকোনো মাধ্যমে <strong>{teacherInfo.name}</strong> স্যারের সাথে যোগাযোগ করে পেমেন্ট সম্পন্ন করুন।
+              {language === 'bn' ? (
+                <>পেইড পরীক্ষা বা পিডিএফগুলোর অ্যাক্সেস পেতে নিচের যেকোনো মাধ্যমে <strong>{teacherInfo.name}</strong> স্যারের সাথে যোগাযোগ করে পেমেন্ট সম্পন্ন করুন।</>
+              ) : (
+                <>To get access to paid exams or PDFs, contact <strong>{teacherInfo.name || 'the teacher'}</strong> through any channel below to complete payment.</>
+              )}
             </p>
 
             <div className="space-y-3">
@@ -88,7 +94,7 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
                     <MessageCircle size={20} />
                   </div>
                   <div className="text-left">
-                    <div className="font-bold">WhatsApp এ মেসেজ দিন</div>
+                    <div className="font-bold">{t('messageOnWhatsApp')}</div>
                     <div className="text-xs opacity-80">{teacherInfo.whatsappNumber}</div>
                   </div>
                 </div>
@@ -106,7 +112,7 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
                     <svg className="w-5 h-5 ml-[-2px]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.11.03-1.84 1.18-5.18 3.44-.49.33-.93.5-1.33.49-.44-.01-1.28-.24-1.91-.44-.52-.17-.93-.25-.89-.54.02-.15.22-.3.62-.46 2.42-1.05 4.04-1.74 4.86-2.08 2.31-.96 2.79-1.13 3.1-1.14.07 0 .23.02.32.09.07.06.09.13.1.2z"/></svg>
                   </div>
                   <div className="text-left">
-                    <div className="font-bold">Telegram এ মেসেজ দিন</div>
+                    <div className="font-bold">{t('messageOnTelegram')}</div>
                     <div className="text-xs opacity-80">@porikkhaghor</div>
                   </div>
                 </div>
@@ -122,7 +128,7 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
                     <PhoneCall size={20} />
                   </div>
                   <div className="text-left">
-                    <div className="font-bold">সরাসরি কল করুন</div>
+                    <div className="font-bold">{t('callDirectly')}</div>
                     <div className="text-xs opacity-80">{teacherInfo.phone}</div>
                   </div>
                 </div>
@@ -130,7 +136,7 @@ export default function PaymentModal({ isOpen, onClose }: PaymentModalProps) {
             </div>
 
             <p className="text-xs text-center text-gray-500 mt-6 bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-              💡 <strong>পেমেন্ট করার পর:</strong> আপনার ইমেইলটি স্যারকে জানাবেন। তিনি তার ড্যাশবোর্ড থেকে আপনার অ্যাকাউন্টটি প্রিমিয়াম করে দিবেন।
+              💡 <strong>{t('afterPaymentNote')}</strong> {t('afterPaymentDesc')}
             </p>
           </div>
         </motion.div>

@@ -5,7 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
+import { useLanguage } from '../../context/LanguageContext';
+
 export default function Footer() {
+  const { language, t } = useLanguage();
   const [activePolicy, setActivePolicy] = useState<'about' | 'privacy' | 'terms' | 'refund' | null>(null);
   const [footerInfo, setFooterInfo] = useState({
     footerAddress: 'ধানমন্ডি ৩২, ঢাকা, বাংলাদেশ',
@@ -37,10 +40,30 @@ export default function Footer() {
   }, []);
 
   const policyContent = {
-    about: { title: 'আমাদের সম্পর্কে', text: 'পরীক্ষাঘর হলো বাংলাদেশের অন্যতম সেরা অনলাইন এক্সাম প্ল্যাটফর্ম। এখানে শিক্ষার্থীরা রিয়েল-টাইম টাইমার ও নেগেটিভ মার্কিং সহ পরীক্ষা দিয়ে নিজেদের যাচাই করতে পারে। আমাদের মূল লক্ষ্য হলো সবার জন্য মানসম্মত শিক্ষা নিশ্চিত করা।' },
-    privacy: { title: 'প্রাইভেসি পলিসি', text: 'আপনার ব্যক্তিগত তথ্যের গোপনীয়তা রক্ষায় আমরা কঠোরভাবে প্রতিশ্রুতিবদ্ধ। আমরা আপনার নাম, ইমেইল এবং পরীক্ষার ফলাফল ছাড়া অন্য কোনো সংবেদনশীল তথ্য সংগ্রহ করি না এবং এই তথ্য কোনো থার্ড-পার্টির সাথে শেয়ার করি না।' },
-    terms: { title: 'শর্তাবলী (Terms & Conditions)', text: 'আমাদের প্ল্যাটফর্ম ব্যবহারের জন্য কিছু সাধারণ নিয়ম রয়েছে। কোনো বেআইনি কাজ করা, অন্যের অ্যাকাউন্ট ব্যবহার করা বা সিস্টেমের ক্ষতি করার চেষ্টা করলে অ্যাকাউন্টটি সাসপেন্ড করা হতে পারে। কর্তৃপক্ষ যেকোনো সময় নিয়মাবলী পরিবর্তন করার অধিকার রাখে।' },
-    refund: { title: 'রিফান্ড পলিসি', text: 'যেহেতু এটি একটি সম্পূর্ণ ডিজিটাল সেবা (পরীক্ষা এবং পিডিএফ), তাই একবার কোনো পেইড পরীক্ষা বা প্যাকেজ কিনে ফেললে সাধারণত তার কোনো রিফান্ড প্রযোজ্য হয় না। তবে টেকনিক্যাল কোনো সমস্যা হলে আমাদের সাথে যোগাযোগ করতে পারেন।' }
+    about: { 
+      title: language === 'bn' ? 'আমাদের সম্পর্কে' : 'About Us', 
+      text: language === 'bn' 
+        ? 'পরীক্ষাঘর হলো বাংলাদেশের অন্যতম সেরা অনলাইন এক্সাম প্ল্যাটফর্ম। এখানে শিক্ষার্থীরা রিয়েল-টাইম টাইমার ও নেগেটিভ মার্কিং সহ পরীক্ষা দিয়ে নিজেদের যাচাই করতে পারে। আমাদের মূল লক্ষ্য হলো সবার জন্য মানসম্মত শিক্ষা নিশ্চিত করা।' 
+        : 'Porikkhaghor is a premier online examination and preparation platform. Here students can evaluate their preparation with live countdown timers, detailed analytics, and negative marking. Our core mission is to empower education for everyone.'
+    },
+    privacy: { 
+      title: language === 'bn' ? 'প্রাইভেসি পলিসি' : 'Privacy Policy', 
+      text: language === 'bn'
+        ? 'আপনার ব্যক্তিগত তথ্যের গোপনীয়তা রক্ষায় আমরা কঠোরভাবে প্রতিশ্রুতিবদ্ধ। আমরা আপনার নাম, ইমেইল এবং পরীক্ষার ফলাফল ছাড়া অন্য কোনো সংবেদনশীল তথ্য সংগ্রহ করি না এবং এই তথ্য কোনো থার্ড-পার্টির সাথে শেয়ার করি না।'
+        : 'We are committed to safeguarding your privacy. We only store your essential account details (name, email) and exam submissions, and never share your data with unauthorized third parties.'
+    },
+    terms: { 
+      title: language === 'bn' ? 'শর্তাবলী (Terms & Conditions)' : 'Terms & Conditions', 
+      text: language === 'bn'
+        ? 'আমাদের প্ল্যাটফর্ম ব্যবহারের জন্য কিছু সাধারণ নিয়ম রয়েছে। কোনো বেআইনি কাজ করা, অন্যের অ্যাকাউন্ট ব্যবহার করা বা সিস্টেমের ক্ষতি করার চেষ্টা করলে অ্যাকাউন্টটি সাসপেন্ড করা হতে পারে। কর্তৃপক্ষ যেকোনো সময় নিয়মাবলী পরিবর্তন করার অধিকার রাখে।'
+        : 'By using this platform, you agree to fair use policies. Unauthorized tampering or account sharing may result in account termination. The administrators reserve the right to revise terms as appropriate.'
+    },
+    refund: { 
+      title: language === 'bn' ? 'রিফান্ড পলিসি' : 'Refund Policy', 
+      text: language === 'bn'
+        ? 'যেহেতু এটি একটি সম্পূর্ণ ডিজিটাল সেবা (পরীক্ষা এবং পিডিএফ), তাই একবার কোনো পেইড পরীক্ষা বা প্যাকেজ কিনে ফেললে সাধারণত তার কোনো রিফান্ড প্রযোজ্য হয় না। তবে টেকনিক্যাল কোনো সমস্যা হলে আমাদের সাথে যোগাযোগ করতে পারেন।'
+        : 'As our services consist of instant access to digital mock exams, materials, and PDFs, purchases are non-refundable once unlocked. For genuine technical concerns, please contact our support desk.'
+    }
   };
 
   return (
@@ -51,42 +74,42 @@ export default function Footer() {
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2 text-primary-light dark:text-primary-dark font-heading font-bold text-2xl">
               <BookOpen size={28} className="text-accent-light dark:text-accent-dark" />
-              <span>পরীক্ষাঘর</span>
+              <span>{t('brandName')}</span>
             </Link>
             <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-              দেশের সেরা অনলাইন এক্সাম প্ল্যাটফর্ম। নিজেকে যাচাই করুন, ভুলগুলো শুধরে নিন এবং চূড়ান্ত প্রস্তুতির জন্য নিজেকে প্রস্তুত করুন।
+              {t('brandTagline')}
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">প্রয়োজনীয় লিংক</h3>
+            <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">{t('quickLinks')}</h3>
             <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-              <li><Link to="/exams" className="hover:text-primary-light dark:hover:text-primary-dark transition-colors">সকল পরীক্ষা</Link></li>
-              <li><Link to="/resources" className="hover:text-primary-light dark:hover:text-primary-dark transition-colors">পিডিএফ ও রিসোর্স</Link></li>
-              <li><Link to="/mistakes" className="hover:text-primary-light dark:hover:text-primary-dark transition-colors">ভুল উত্তরের ডায়েরি</Link></li>
-              <li><Link to="/dashboard" className="hover:text-primary-light dark:hover:text-primary-dark transition-colors">স্টুডেন্ট ড্যাশবোর্ড</Link></li>
+              <li><Link to="/exams" className="hover:text-primary-light dark:hover:text-primary-dark transition-colors">{language === 'bn' ? 'সকল পরীক্ষা' : 'All Exams'}</Link></li>
+              <li><Link to="/resources" className="hover:text-primary-light dark:hover:text-primary-dark transition-colors">{language === 'bn' ? 'পিডিএফ ও রিসোর্স' : 'PDFs & Resources'}</Link></li>
+              <li><Link to="/mistakes" className="hover:text-primary-light dark:hover:text-primary-dark transition-colors">{t('mistakeBank')}</Link></li>
+              <li><Link to="/dashboard" className="hover:text-primary-light dark:hover:text-primary-dark transition-colors">{t('dashboard')}</Link></li>
             </ul>
           </div>
 
           {/* Support */}
           <div>
-            <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">সাপোর্ট ও পলিসি</h3>
+            <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">{t('supportAndPolicy')}</h3>
             <ul className="space-y-3 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
-              <li><span onClick={() => setActivePolicy('about')} className="hover:text-primary-light dark:hover:text-primary-dark transition-colors block">আমাদের সম্পর্কে</span></li>
-              <li><span onClick={() => setActivePolicy('privacy')} className="hover:text-primary-light dark:hover:text-primary-dark transition-colors block">প্রাইভেসি পলিসি</span></li>
-              <li><span onClick={() => setActivePolicy('terms')} className="hover:text-primary-light dark:hover:text-primary-dark transition-colors block">শর্তাবলী (Terms & Conditions)</span></li>
-              <li><span onClick={() => setActivePolicy('refund')} className="hover:text-primary-light dark:hover:text-primary-dark transition-colors block">রিফান্ড পলিসি</span></li>
+              <li><span onClick={() => setActivePolicy('about')} className="hover:text-primary-light dark:hover:text-primary-dark transition-colors block">{t('aboutUs')}</span></li>
+              <li><span onClick={() => setActivePolicy('privacy')} className="hover:text-primary-light dark:hover:text-primary-dark transition-colors block">{t('privacyPolicy')}</span></li>
+              <li><span onClick={() => setActivePolicy('terms')} className="hover:text-primary-light dark:hover:text-primary-dark transition-colors block">{t('termsAndConditions')}</span></li>
+              <li><span onClick={() => setActivePolicy('refund')} className="hover:text-primary-light dark:hover:text-primary-dark transition-colors block">{t('refundPolicy')}</span></li>
             </ul>
           </div>
 
           {/* Contact Info */}
           <div>
-            <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">যোগাযোগ</h3>
+            <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">{t('contactUs')}</h3>
             <ul className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
               <li className="flex items-start gap-3">
                 <MapPin size={18} className="text-primary-light dark:text-primary-dark mt-0.5 shrink-0" />
-                <span>{footerInfo.footerAddress}</span>
+                <span>{language === 'en' && footerInfo.footerAddress.includes('ধানমন্ডি') ? 'Dhanmondi 32, Dhaka, Bangladesh' : footerInfo.footerAddress}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={18} className="text-primary-light dark:text-primary-dark shrink-0" />
@@ -102,7 +125,7 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-gray-200 dark:border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-          <p>© {new Date().getFullYear()} পরীক্ষাঘর (PorikkhaGhor)। সর্বস্বত্ব সংরক্ষিত।</p>
+          <p>© {new Date().getFullYear()} {t('brandName')}. {t('allRightsReserved')}</p>
           <p>Developed with ❤️ for Students</p>
         </div>
       </div>

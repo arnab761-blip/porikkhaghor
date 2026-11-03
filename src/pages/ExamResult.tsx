@@ -8,9 +8,11 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import QuestionDiscussion from '../components/forum/QuestionDiscussion';
 import { MathText } from '../components/MathText';
 import { getCorrectAnswerIndex } from '../lib/questionUtils';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ExamResult() {
   const { resultId } = useParams();
+  const { t, language, toLangNumber } = useLanguage();
   const [resultData, setResultData] = useState<any>(null);
   const [examData, setExamData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -109,16 +111,10 @@ export default function ExamResult() {
     fetchResults();
   }, [resultId]);
 
-  if (loading) return <div className="p-8 text-center text-lg">রেজাল্ট তৈরি হচ্ছে...</div>;
-  if (!resultData || !examData) return <div className="p-8 text-center">ডেটা পাওয়া যায়নি।</div>;
+  if (loading) return <div className="p-8 text-center text-lg">{t('submittingExam')}</div>;
+  if (!resultData || !examData) return <div className="p-8 text-center">{language === 'bn' ? 'ডেটা পাওয়া যায়নি।' : 'No data found.'}</div>;
 
   const { stats, answers } = resultData;
-
-  const toBengaliNumber = (num: number | string) => {
-    if (num === null || num === undefined || Number.isNaN(Number(num))) return '০';
-    const bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-    return num.toString().replace(/\d/g, (d) => bengaliDigits[parseInt(d)]);
-  };
 
   const marks = Number(resultData?.marksPerQuestion) || Number(examData?.marksPerQuestion) || 1;
   const neg = (resultData?.negativeMarking !== undefined && resultData?.negativeMarking !== null)
@@ -232,9 +228,9 @@ export default function ExamResult() {
   }
 
   const pieData = [
-    { name: 'সঠিক', value: activeStats.correct, color: '#10B981' }, // Green
-    { name: 'ভুল', value: activeStats.wrong, color: '#EF4444' }, // Red
-    { name: 'উত্তর দেননি', value: activeStats.skipped, color: '#9CA3AF' } // Gray
+    { name: language === 'bn' ? 'সঠিক' : 'Correct', value: activeStats.correct, color: '#10B981' },
+    { name: language === 'bn' ? 'ভুল' : 'Wrong', value: activeStats.wrong, color: '#EF4444' },
+    { name: language === 'bn' ? 'উত্তর দেননি' : 'Skipped', value: activeStats.skipped, color: '#9CA3AF' }
   ];
 
   return (
@@ -244,7 +240,7 @@ export default function ExamResult() {
           <Award size={40} />
         </div>
         <h1 className="text-3xl font-heading font-bold text-primary-light dark:text-primary-dark">
-          পরীক্ষা সম্পন্ন হয়েছে!
+          {language === 'bn' ? 'পরীক্ষা সম্পন্ন হয়েছে!' : 'Exam Completed!'}
         </h1>
         <p className="text-xl mt-2 text-gray-600 dark:text-gray-400">
           {examData.title}
@@ -258,14 +254,22 @@ export default function ExamResult() {
             <Trophy size={30} className="text-white" />
           </div>
           <div>
-            <span className="text-xs uppercase tracking-wider font-bold text-amber-100">মেধা অবস্থান / Merit Rank</span>
+            <span className="text-xs uppercase tracking-wider font-bold text-amber-100">
+              {language === 'bn' ? 'মেধা অবস্থান / Merit Rank' : 'Merit Position & Rank'}
+            </span>
             <div className="text-2xl sm:text-3xl font-extrabold mt-0.5">
-              {rankInfo ? `${toBengaliNumber(rankInfo.rank)} নম্বর স্থান` : 'গণনা হচ্ছে...'}
-              {rankInfo && <span className="text-sm font-normal text-amber-100 ml-2">(মোট {toBengaliNumber(rankInfo.total)} জনের মধ্যে)</span>}
+              {rankInfo ? (language === 'bn' ? `${toLangNumber(rankInfo.rank)} নম্বর স্থান` : `Rank #${toLangNumber(rankInfo.rank)}`) : (language === 'bn' ? 'গণনা হচ্ছে...' : 'Calculating...')}
+              {rankInfo && (
+                <span className="text-sm font-normal text-amber-100 ml-2">
+                  ({language === 'bn' ? `মোট ${toLangNumber(rankInfo.total)} জনের মধ্যে` : `Out of ${toLangNumber(rankInfo.total)} students`})
+                </span>
+              )}
             </div>
             {(rankInfo as any)?.isRetake && (
               <p className="text-xs text-amber-100/90 mt-1 font-medium">
-                💡 এটি আপনার অনুশীলনমূলক রি-টেক পরীক্ষা। অফিসিয়াল মেধা তালিকায় ১ম পরীক্ষার ফলাফল বহাল রয়েছে।
+                {language === 'bn' 
+                  ? '💡 এটি আপনার অনুশীলনমূলক রি-টেক পরীক্ষা। অফিসিয়াল মেধা তালিকায় ১ম পরীক্ষার ফলাফল বহাল রয়েছে।' 
+                  : '💡 This is a practice retake. Your 1st attempt result is preserved on the official merit list.'}
               </p>
             )}
           </div>
@@ -275,7 +279,7 @@ export default function ExamResult() {
           to={`/leaderboard/${resultData.examId}`}
           className="px-6 py-3 bg-white text-orange-600 hover:bg-orange-50 font-bold rounded-2xl text-sm transition-all shadow-sm flex items-center gap-2 shrink-0 hover:scale-105"
         >
-          <Award size={18} /> সম্পূর্ণ মেধা তালিকা দেখুন →
+          <Award size={18} /> {language === 'bn' ? 'সম্পূর্ণ মেধা তালিকা দেখুন →' : 'View Full Merit List →'}
         </Link>
       </div>
 
@@ -283,17 +287,21 @@ export default function ExamResult() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
         {/* Score Card */}
         <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 text-center flex flex-col justify-center">
-          <h2 className="text-lg text-gray-500 dark:text-gray-400 mb-2">আপনার প্রাপ্ত নম্বর</h2>
+          <h2 className="text-lg text-gray-500 dark:text-gray-400 mb-2">{t('obtainedScore')}</h2>
           <div className="text-6xl font-bold text-accent-light dark:text-accent-dark">
-            {toBengaliNumber(displayScore)} <span className="text-2xl text-gray-400 font-normal">/ {toBengaliNumber(displayOutOf)}</span>
+            {toLangNumber(displayScore)} <span className="text-2xl text-gray-400 font-normal">/ {toLangNumber(displayOutOf)}</span>
           </div>
           <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
             {neg > 0 ? (
               activeStats.wrong > 0 
-                ? `(নেগেটিভ মার্কিংয়ের জন্য -${toBengaliNumber((activeStats.wrong * neg).toFixed(2))} নম্বর কাটা গেছে)` 
-                : '(কোনো নেগেটিভ মার্কিং কাটা যায়নি)'
+                ? (language === 'bn' 
+                    ? `(নেগেটিভ মার্কিংয়ের জন্য -${toLangNumber((activeStats.wrong * neg).toFixed(2))} নম্বর কাটা গেছে)` 
+                    : `(-${toLangNumber((activeStats.wrong * neg).toFixed(2))} marks deducted for negative marking)`)
+                : (language === 'bn' ? '(কোনো নেগেটিভ মার্কিং কাটা যায়নি)' : '(No negative marks deducted)')
             ) : (
-              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">🎉 এই পরীক্ষায় কোনো নেগেটিভ মার্কিং ছিল না!</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                {language === 'bn' ? '🎉 এই পরীক্ষায় কোনো নেগেটিভ মার্কিং ছিল না!' : '🎉 No negative marking for this exam!'}
+              </span>
             )}
           </p>
         </div>
@@ -323,40 +331,40 @@ export default function ExamResult() {
           <div className="w-1/2 pl-4 space-y-3">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full bg-green-500"></div>
-              <span className="font-medium">{toBengaliNumber(activeStats.correct)} সঠিক</span>
+              <span className="font-medium">{toLangNumber(activeStats.correct)} {t('correctAnswers')}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full bg-red-500"></div>
-              <span className="font-medium">{toBengaliNumber(activeStats.wrong)} ভুল</span>
+              <span className="font-medium">{toLangNumber(activeStats.wrong)} {t('wrongAnswers')}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full bg-gray-400"></div>
-              <span className="font-medium">{toBengaliNumber(activeStats.skipped)} উত্তর দেননি</span>
+              <span className="font-medium">{toLangNumber(activeStats.skipped)} {t('skippedAnswers')}</span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-200 dark:border-gray-800 pb-4 mb-6 gap-4">
-        <h2 className="text-2xl font-bold">প্রশ্নের সমাধান ও ব্যাখ্যা</h2>
+        <h2 className="text-2xl font-bold">{t('solutionAndExplanation')}</h2>
         <div className="flex flex-wrap gap-2">
           <button 
             onClick={() => setFilterMode('all')}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterMode === 'all' ? 'bg-primary-light text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'}`}
           >
-            সবগুলো
+            {t('all')}
           </button>
           <button 
             onClick={() => setFilterMode('wrong')}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterMode === 'wrong' ? 'bg-red-500 text-white' : 'bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30'}`}
           >
-            শুধু ভুল গুলো
+            {language === 'bn' ? 'শুধু ভুল গুলো' : 'Incorrect Only'}
           </button>
           <button 
             onClick={() => setFilterMode('skipped')}
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterMode === 'skipped' ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'}`}
           >
-            উত্তর না দেওয়া প্রশ্ন গুলো
+            {language === 'bn' ? 'উত্তর না দেওয়া প্রশ্ন গুলো' : 'Skipped Only'}
           </button>
         </div>
       </div>
@@ -387,7 +395,7 @@ export default function ExamResult() {
                 </div>
                 <div className="flex-1">
                   <h3 className="font-medium text-lg flex gap-2">
-                    <span>{displayIdx + 1}.</span>
+                    <span>{toLangNumber(displayIdx + 1)}.</span>
                     <span className="flex-1"><MathText text={q?.text || ''} /></span>
                   </h3>
                   <div className="flex flex-wrap gap-2 mt-2">
@@ -419,7 +427,9 @@ export default function ExamResult() {
 
               {q?.explanation && (
                 <div className="ml-9 p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 rounded-xl text-sm border border-blue-100 dark:border-blue-900">
-                  <strong className="block mb-1 text-blue-800 dark:text-blue-300">ব্যাখ্যা:</strong>
+                  <strong className="block mb-1 text-blue-800 dark:text-blue-300">
+                    {language === 'bn' ? 'ব্যাখ্যা:' : 'Explanation:'}
+                  </strong>
                   <MathText text={q.explanation} />
                 </div>
               )}
@@ -442,13 +452,13 @@ export default function ExamResult() {
           to={`/leaderboard/${resultData.examId}`}
           className="inline-flex items-center gap-2 px-7 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold transition-all shadow-sm hover:scale-105"
         >
-          <Trophy size={18} /> সম্পূর্ণ মেধা তালিকা দেখুন
+          <Trophy size={18} /> {t('viewLeaderboardBtn')}
         </Link>
         <Link 
           to="/exams" 
           className="inline-flex items-center gap-2 px-7 py-3 bg-primary-light hover:bg-primary-dark text-white rounded-xl font-bold transition-all shadow-sm hover:scale-105"
         >
-          আরও পরীক্ষা দিন <ArrowRight size={18} />
+          {language === 'bn' ? 'আরও পরীক্ষা দিন' : 'Take More Exams'} <ArrowRight size={18} />
         </Link>
       </div>
     </motion.div>

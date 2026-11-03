@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, addDoc, query, where, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { MessageCircle, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MathText } from '../MathText';
@@ -27,6 +28,7 @@ export default function QuestionDiscussion({
   questionText?: string;
 }) {
   const { user, role } = useAuth();
+  const { t, toLangNumber, language } = useLanguage();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -71,10 +73,10 @@ export default function QuestionDiscussion({
       await addDoc(collection(db, 'doubts'), {
         examId,
         questionIndex,
-        examTitle: examTitle || 'পরীক্ষা',
+        examTitle: examTitle || (language === 'bn' ? 'পরীক্ষা' : 'Exam'),
         questionText: questionText || '',
         userId: user.uid,
-        userName: user.displayName || (isTeacher ? 'শিক্ষক' : 'শিক্ষার্থী'),
+        userName: user.displayName || (isTeacher ? t('teacherBadge') : t('studentBadge')),
         userRole: role || 'student',
         text: newComment.trim(),
         createdAt: serverTimestamp()
@@ -92,8 +94,10 @@ export default function QuestionDiscussion({
         for (const targetUserId of studentUserIds) {
           await addDoc(collection(db, 'notifications'), {
             userId: targetUserId,
-            title: 'শিক্ষক আপনার প্রশ্নের উত্তর দিয়েছেন 🎓',
-            message: `"${examTitle || 'পরীক্ষা'}"-এর ${questionIndex + 1} নম্বর প্রশ্নে শিক্ষক আপনার ডাউটের উত্তর দিয়েছেন।`,
+            title: language === 'bn' ? 'শিক্ষক আপনার প্রশ্নের উত্তর দিয়েছেন 🎓' : 'Teacher replied to your question 🎓',
+            message: language === 'bn'
+              ? `"${examTitle || 'পরীক্ষা'}"-এর ${toLangNumber(questionIndex + 1)} নম্বর প্রশ্নে শিক্ষক আপনার ডাউটের উত্তর দিয়েছেন।`
+              : `Teacher answered your doubt on Question #${toLangNumber(questionIndex + 1)} in "${examTitle || 'Exam'}".`,
             examId,
             questionIndex,
             createdAt: serverTimestamp(),
@@ -105,8 +109,10 @@ export default function QuestionDiscussion({
         // If student asks doubt, send notification to teacher
         await addDoc(collection(db, 'notifications'), {
           forTeacher: true,
-          title: 'নতুন ডাউট প্রশ্ন ❓',
-          message: `${user.displayName || 'একজন শিক্ষার্থী'} "${examTitle || 'পরীক্ষা'}"-এর ${questionIndex + 1} নম্বর প্রশ্নে একটি নতুন ডাউট জিজ্ঞেস করেছে।`,
+          title: language === 'bn' ? 'নতুন ডাউট প্রশ্ন ❓' : 'New Doubt Question ❓',
+          message: language === 'bn'
+            ? `${user.displayName || 'একজন শিক্ষার্থী'} "${examTitle || 'পরীক্ষা'}"-এর ${toLangNumber(questionIndex + 1)} নম্বর প্রশ্নে একটি নতুন ডাউট জিজ্ঞেস করেছে।`
+            : `${user.displayName || 'A student'} asked a new doubt on Question #${toLangNumber(questionIndex + 1)} in "${examTitle || 'Exam'}".`,
           examId,
           questionIndex,
           createdAt: serverTimestamp(),
@@ -118,7 +124,7 @@ export default function QuestionDiscussion({
       setNewComment('');
     } catch (error) {
       console.error(error);
-      alert('কমেন্ট পোস্ট করতে সমস্যা হয়েছে।');
+      alert(t('commentPostError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -131,7 +137,7 @@ export default function QuestionDiscussion({
         className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary-light dark:hover:text-primary-dark transition-colors"
       >
         <MessageCircle size={18} />
-        {isOpen ? 'আলোচনা বন্ধ করুন' : `ডাউট ক্লিয়ারিং / আলোচনা (${comments.length > 0 ? comments.length : 'নতুন'})`}
+        {isOpen ? t('toggleDiscussionClose') : `${t('toggleDiscussionOpen')} (${comments.length > 0 ? toLangNumber(comments.length) : (language === 'bn' ? 'নতুন' : 'New')})`}
       </button>
 
       <AnimatePresence>
@@ -145,7 +151,7 @@ export default function QuestionDiscussion({
             {/* Comments List */}
             <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
               {comments.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">এখনো কোনো প্রশ্ন বা আলোচনা নেই। প্রথম কমেন্টটি আপনি করুন!</p>
+                <p className="text-sm text-gray-400 italic">{t('noCommentsYet')}</p>
               ) : (
                 comments.map(c => {
                   const isTeacherComment = c.userRole === 'owner' || c.userRole === 'assistant';
@@ -164,7 +170,7 @@ export default function QuestionDiscussion({
                         </span>
                         {isTeacherComment && (
                           <span className="text-[10px] bg-blue-600 text-white font-bold px-2 py-0.5 rounded-full">
-                            শিক্ষক
+                            {t('teacherBadge')}
                           </span>
                         )}
                       </div>
@@ -183,7 +189,7 @@ export default function QuestionDiscussion({
                 type="text" 
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="আপনার ডাউট বা প্রশ্ন লিখুন..."
+                placeholder={t('newCommentPlaceholder')}
                 className="flex-grow p-3 pr-12 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-900 focus:ring-2 focus:ring-accent-light focus:outline-none"
               />
               <button 

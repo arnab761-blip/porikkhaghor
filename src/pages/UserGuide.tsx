@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 import { 
   BookOpen, 
   Sparkles, 
@@ -33,6 +34,7 @@ interface GuideSection {
 }
 
 export default function UserGuide() {
+  const { toLangNumber, language } = useLanguage();
   const [activeTab, setActiveTab] = useState<'all' | 'teacher' | 'student' | 'business'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>('create-exam');
@@ -41,8 +43,8 @@ export default function UserGuide() {
     setExpandedId(prev => prev === id ? null : id);
   };
 
-  // Guide Data
-  const teacherGuides: GuideSection[] = [
+  // Bengali Guides
+  const teacherGuidesBn: GuideSection[] = [
     {
       id: 'create-exam',
       title: 'নতুন পরীক্ষা তৈরি ও নেগেটিভ মার্কিং সেট করা',
@@ -182,7 +184,7 @@ export default function UserGuide() {
     }
   ];
 
-  const studentGuides: GuideSection[] = [
+  const studentGuidesBn: GuideSection[] = [
     {
       id: 'student-exam',
       title: 'পরীক্ষা দেওয়া ও টাইমার ব্যবস্থাপনা',
@@ -245,7 +247,7 @@ export default function UserGuide() {
     }
   ];
 
-  const businessGuides: GuideSection[] = [
+  const businessGuidesBn: GuideSection[] = [
     {
       id: 'tech-stack',
       title: 'সফটওয়্যারটির বিশেষ প্রযুক্তি ও পারফরম্যান্স সুবিধা',
@@ -296,6 +298,265 @@ export default function UserGuide() {
     }
   ];
 
+  // English Guides
+  const teacherGuidesEn: GuideSection[] = [
+    {
+      id: 'create-exam',
+      title: 'Creating Exams & Configuring Negative Marking',
+      icon: Layers,
+      summary: 'Create general exams, university/medical admission patterns, and import 100+ questions from Excel.',
+      steps: [
+        {
+          heading: '1. Access Exam Creation Page:',
+          description: 'Navigate to "Create Exam" (/create-exam) from your dashboard or top navigation.'
+        },
+        {
+          heading: '2. Fill Basic Exam Info:',
+          description: 'Set Title, Time Limit, Marks per question, Category, and Sub-category (e.g. Category: "HSC 2024", Sub-category: "Physics 1st Paper") to automatically organize into folders.'
+        },
+        {
+          heading: '3. Set Negative Marking:',
+          description: 'Input penalty marks per incorrect response (e.g. 0.25). To conduct tests without penalties (e.g. Dhaka 7 Colleges or school exams), set it to 0. A green badge "No Negative (0)" will display on the exam card.',
+          tip: 'Setting 0 negative marking enables stress-free practice for foundation students.'
+        },
+        {
+          heading: '4. Admission Patterns & Optional Subjects:',
+          description: 'Select university admission presets (DU A-Unit, GST A-Unit, RU, CU, BUET, Medical). Candidates can choose their optional subjects (Higher Math / Biology) before starting.'
+        },
+        {
+          heading: '5. Adding Questions via 2 Methods:',
+          description: 'a) Web Editor: Type questions, options & explanations with automatic KaTeX/LaTeX math formula rendering.\nb) 1-Click Excel Import: Download the demo template, paste questions, and upload up to 150 questions in seconds.'
+        }
+      ]
+    },
+    {
+      id: 'manage-packages',
+      title: 'Managing Course Packages & Cover Banners',
+      icon: Briefcase,
+      summary: 'Bundle exams and lecture sheets together to sell premium prep packages.',
+      steps: [
+        {
+          heading: '1. Open Packages Page:',
+          description: 'Click "Manage Packages & Courses" (/manage-packages) from the dashboard.'
+        },
+        {
+          heading: '2. Package Details & Pricing:',
+          description: 'Provide an engaging course title, description, and price in BDT.'
+        },
+        {
+          heading: '3. Add Cover Banner URL:',
+          description: 'Paste direct image URL from ImgBB, PostImages, Google Drive, or any image host to generate a crisp course card.'
+        },
+        {
+          heading: '4. Assign Exams & Sheets:',
+          description: 'Select exams and lecture notes included in the package. Save to publish instantly.'
+        }
+      ]
+    },
+    {
+      id: 'manage-students',
+      title: 'Student Grading & Granular Access Control',
+      icon: Users,
+      summary: 'Search student by email, view their attempted answer sheets, and unlock specific packages or individual exams.',
+      steps: [
+        {
+          heading: '1. Search Student:',
+          description: 'On "Students & Results" (/manage-students), enter the student email and click Search.'
+        },
+        {
+          heading: '2. View Submissions & Detailed Answers:',
+          description: 'Review dates, scores, correct/wrong counts, and inspect their full question-by-question answer script live.'
+        },
+        {
+          heading: '3. Granular Package Unlock:',
+          description: 'Click "Unlock This Package" next to the purchased course. Only the exams and sheets in that package will unlock; all other packages remain securely locked!'
+        },
+        {
+          heading: '4. Single Exam or PDF Unlock:',
+          description: 'If a student purchases an individual exam or sheet, pick it from the dropdown and click "+ Unlock".'
+        },
+        {
+          heading: '5. All-In-One VIP Pass:',
+          description: 'To grant full platform access, toggle "All-in-One VIP Access".'
+        }
+      ]
+    },
+    {
+      id: 'leaderboard-monitoring',
+      title: 'Exam Merit List & Ranking (Leaderboard)',
+      icon: Award,
+      summary: 'Track real-time candidate merit lists with automated 1st-attempt filtering.',
+      steps: [
+        {
+          heading: '1. Real-Time Leaderboard:',
+          description: 'Click "Merit List" on any exam card or visit the Leaderboard tab in student management.'
+        },
+        {
+          heading: '2. 1st-Attempt Fairness Filter:',
+          description: 'To prevent students from inflating rankings through repeated attempts, the system highlights their 1st attempt.'
+        },
+        {
+          heading: '3. Tie-breaking Protocol:',
+          description: '1st: Total Score, 2nd: Higher Correct Count, 3rd: Fastest Submission Time.'
+        }
+      ]
+    },
+    {
+      id: 'doubt-system',
+      title: 'Student-Teacher Doubt Resolution Forum',
+      icon: HelpCircle,
+      summary: 'Students can ask doubts directly from any exam question and teachers reply with instant notifications.',
+      steps: [
+        {
+          heading: '1. Doubt Submission & Alert:',
+          description: 'Students submit doubts from the exam result page. A red alert badge notifies the teacher immediately.'
+        },
+        {
+          heading: '2. Teacher Doubt Resolution Page:',
+          description: 'Teachers review the original question, user query, and reply with LaTeX-enabled explanations.'
+        }
+      ]
+    },
+    {
+      id: 'admin-settings',
+      title: 'Admin Settings, Payment Numbers & Assistant Teachers',
+      icon: ShieldCheck,
+      summary: 'Update bKash/Nagad merchant numbers, Telegram channel links, and manage assistant teachers.',
+      steps: [
+        {
+          heading: '1. Payment Methods Setup:',
+          description: 'In Admin Settings (/admin-settings), configure your bKash, Nagad, or Rocket numbers and payment instructions.'
+        },
+        {
+          heading: '2. Add Assistant Teachers:',
+          description: 'Add colleague Gmail addresses under "Add Assistant Teacher" to delegate exam creation and result reviews.'
+        },
+        {
+          heading: '3. 1-Click Access Revocation:',
+          description: 'Click delete beside an assistant teacher at any time to instantly revoke privileges back to standard student role.'
+        }
+      ]
+    }
+  ];
+
+  const studentGuidesEn: GuideSection[] = [
+    {
+      id: 'student-exam',
+      title: 'Taking Exams & Timer Management',
+      icon: Clock,
+      summary: 'Live countdown timer, OMR bubble selection, and network-safe offline auto-saving.',
+      steps: [
+        {
+          heading: '1. Launching an Exam:',
+          description: 'Select your preferred exam from the exams catalog and click "Start Exam".'
+        },
+        {
+          heading: '2. Optional Subject Selection:',
+          description: 'For university admission patterns, choose your compulsory and optional subjects (e.g. Higher Math / Biology).'
+        },
+        {
+          heading: '3. Network-Safe In-Progress Saving:',
+          description: 'If your phone restarts or the internet disconnects, your answers and remaining time are preserved. Re-open to "Continue Exam" seamlessly.'
+        },
+        {
+          heading: '4. OMR Navigation Grid:',
+          description: 'Tap the OMR grid button to view all question statuses and jump directly to any question.'
+        }
+      ]
+    },
+    {
+      id: 'student-mistake-bank',
+      title: 'Mistake Bank & Revision Diary',
+      icon: CheckCircle2,
+      summary: 'Automated repository of all incorrectly answered exam questions for targeted practice.',
+      steps: [
+        {
+          heading: '1. Automated Collection:',
+          description: 'Whenever you answer incorrectly in any exam, the questions are automatically saved to your "Mistake Bank" (/mistakes).'
+        },
+        {
+          heading: '2. Pre-Exam Revision:',
+          description: 'Revise all logged mistakes before major exams to eliminate recurring weaknesses.'
+        }
+      ]
+    },
+    {
+      id: 'student-auth',
+      title: 'Login, Registration & Password Recovery',
+      icon: Lock,
+      summary: 'One-click Google login, email & phone registration, and instant password recovery.',
+      steps: [
+        {
+          heading: '1. Google 1-Click Sign In:',
+          description: 'Sign in effortlessly using your Google account without needing to remember extra passwords.'
+        },
+        {
+          heading: '2. Mobile & Email Registration:',
+          description: 'Create an account with name, email, phone number, and a secure password. Use the eye toggle to view or hide passwords.'
+        },
+        {
+          heading: '3. Password Recovery:',
+          description: 'Click "Forgot Password?" and submit your email to receive an instant password reset link.'
+        }
+      ]
+    }
+  ];
+
+  const businessGuidesEn: GuideSection[] = [
+    {
+      id: 'tech-stack',
+      title: 'Platform Architecture & Performance Advantages',
+      icon: Zap,
+      summary: 'Why this platform runs faster, more securely, and with zero maintenance compared to traditional coaching software.',
+      steps: [
+        {
+          heading: '1. Serverless React + Vite Performance:',
+          description: 'Built on high-speed React + Vite architecture. Even when thousands of students take exams simultaneously, the app responds instantaneously without lag.'
+        },
+        {
+          heading: '2. Google Cloud Firestore Real-Time Database:',
+          description: 'Student responses and exam records are backed by enterprise-grade Google Cloud security with zero data loss risk.'
+        },
+        {
+          heading: '3. 100% Mobile Responsive Interface:',
+          description: 'Optimized with large search bars, touch-friendly buttons, and seamless mobile navigation.'
+        },
+        {
+          heading: '4. Zero Server Maintenance Overhead:',
+          description: 'Runs on Cloudflare Pages and Firebase free tiers, supporting thousands of active students with zero monthly hosting bills.'
+        }
+      ]
+    },
+    {
+      id: 'selling-points',
+      title: 'Key Selling Points for Prospective Clients & Institutions',
+      icon: Sparkles,
+      summary: 'Core presentation highlights when demoing or pitching this website to coaching centers and educators.',
+      steps: [
+        {
+          heading: '1. 100% Custom White-Label Branding:',
+          description: 'The educator can display their own brand name, logo, bKash/Nagad payment info, and direct contact details.'
+        },
+        {
+          heading: '2. Instant Excel Question Upload:',
+          description: 'No manual typing needed. Import entire 100-question test papers from Excel spreadsheets in 5 seconds.'
+        },
+        {
+          heading: '3. Monetization via Course Packages:',
+          description: 'Create and sell model test batches, revision packages, and lecture sheets with automated locking.'
+        },
+        {
+          heading: '4. Full Intellectual Property Protection:',
+          description: 'Source code remains in your possession. Clients receive their customized deployment on their custom domain.'
+        }
+      ]
+    }
+  ];
+
+  const teacherGuides = language === 'en' ? teacherGuidesEn : teacherGuidesBn;
+  const studentGuides = language === 'en' ? studentGuidesEn : studentGuidesBn;
+  const businessGuides = language === 'en' ? businessGuidesEn : businessGuidesBn;
+
   // Combine and filter
   const allGuides = [
     ...teacherGuides.map(g => ({ ...g, category: 'teacher' as const })),
@@ -322,13 +583,15 @@ export default function UserGuide() {
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary-light via-indigo-600 to-primary-dark text-white p-6 sm:p-10 mb-8 shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold mb-3">
-            <BookOpen size={14} /> পরীক্ষাঘর অফিসিয়াল ইউজার গাইড
+            <BookOpen size={14} /> {language === 'en' ? 'Porikkhaghor Official User Guide' : 'পরীক্ষাঘর অফিসিয়াল ইউজার গাইড'}
           </div>
           <h1 className="text-2xl sm:text-4xl font-heading font-bold mb-3">
-            প্ল্যাটফর্মের সকল ফিচার ও ব্যবহার নির্দেশিকা
+            {language === 'en' ? 'Platform Feature Documentation & Manual' : 'প্ল্যাটফর্মের সকল ফিচার ও ব্যবহার নির্দেশিকা'}
           </h1>
           <p className="text-white/90 text-xs sm:text-sm leading-relaxed">
-            পরীক্ষা তৈরি, এক্সেল প্রশ্ন আপলোড, প্যাকেজ তৈরি, স্টুডেন্ট আনলক ম্যানেজমেন্ট এবং শিক্ষার্থীদের পরীক্ষা দেওয়ার সব নিয়মাবলী এখানে সুন্দরভাবে ধাপে ধাপে সাজানো রয়েছে।
+            {language === 'en' 
+              ? 'Comprehensive step-by-step documentation for creating exams, Excel question uploads, course packaging, student unlock management, and exam taking guidelines.' 
+              : 'পরীক্ষা তৈরি, এক্সেল প্রশ্ন আপলোড, প্যাকেজ তৈরি, স্টুডেন্ট আনলক ম্যানেজমেন্ট এবং শিক্ষার্থীদের পরীক্ষা দেওয়ার সব নিয়মাবলী এখানে সুন্দরভাবে ধাপে ধাপে সাজানো রয়েছে।'}
           </p>
         </div>
 
@@ -345,7 +608,7 @@ export default function UserGuide() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="যেকোনো ফিচার বা নিয়ম লিখে খুঁজুন (যেমন: এক্সেল, নেগেটিভ, প্যাকেজ)..."
+            placeholder={language === 'en' ? 'Search features, tools, or guides (e.g., excel, negative marking, packages)...' : 'যেকোনো ফিচার বা নিয়ম লিখে খুঁজুন (যেমন: এক্সেল, নেগেটিভ, প্যাকেজ)...'}
             className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary-light dark:text-white shadow-sm"
           />
         </div>
@@ -360,7 +623,7 @@ export default function UserGuide() {
                 : 'text-gray-600 dark:text-gray-400'
             }`}
           >
-            সকল বিষয় ({allGuides.length})
+            {language === 'en' ? `All Topics (${toLangNumber(allGuides.length)})` : `সকল বিষয় (${toLangNumber(allGuides.length)})`}
           </button>
           <button
             onClick={() => setActiveTab('teacher')}
@@ -370,7 +633,7 @@ export default function UserGuide() {
                 : 'text-gray-600 dark:text-gray-400'
             }`}
           >
-            <ShieldCheck size={14} /> শিক্ষক ও এডমিন
+            <ShieldCheck size={14} /> {language === 'en' ? 'Teacher & Admin' : 'শিক্ষক ও এডমিন'}
           </button>
           <button
             onClick={() => setActiveTab('student')}
@@ -380,7 +643,7 @@ export default function UserGuide() {
                 : 'text-gray-600 dark:text-gray-400'
             }`}
           >
-            <GraduationCap size={14} /> শিক্ষার্থী গাইড
+            <GraduationCap size={14} /> {language === 'en' ? 'Student Guide' : 'শিক্ষার্থী গাইড'}
           </button>
           <button
             onClick={() => setActiveTab('business')}
@@ -390,7 +653,7 @@ export default function UserGuide() {
                 : 'text-gray-600 dark:text-gray-400'
             }`}
           >
-            <Briefcase size={14} /> ক্লায়েন্ট পিচ
+            <Briefcase size={14} /> {language === 'en' ? 'Client Pitch' : 'ক্লায়েন্ট পিচ'}
           </button>
         </div>
       </div>
@@ -399,8 +662,12 @@ export default function UserGuide() {
       {filteredGuides.length === 0 ? (
         <div className="text-center p-12 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
           <HelpCircle size={48} className="mx-auto text-gray-300 dark:text-gray-700 mb-3" />
-          <h3 className="font-bold text-gray-700 dark:text-gray-300">কোনো ফলাফল পাওয়া যায়নি</h3>
-          <p className="text-xs text-gray-500 mt-1">অন্য কোনো শব্দ লিখে সার্চ করে দেখুন।</p>
+          <h3 className="font-bold text-gray-700 dark:text-gray-300">
+            {language === 'en' ? 'No guides found' : 'কোনো ফলাফল পাওয়া যায়নি'}
+          </h3>
+          <p className="text-xs text-gray-500 mt-1">
+            {language === 'en' ? 'Try searching with different keywords.' : 'অন্য কোনো শব্দ লিখে সার্চ করে দেখুন।'}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -408,9 +675,9 @@ export default function UserGuide() {
             const Icon = item.icon;
             const isExpanded = expandedId === item.id;
             const categoryBadge = 
-              item.category === 'teacher' ? { label: 'শিক্ষক ও এডমিন', color: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300' } :
-              item.category === 'student' ? { label: 'শিক্ষার্থী', color: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300' } :
-              { label: 'ক্লায়েন্ট ও টেকনোলজি', color: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300' };
+              item.category === 'teacher' ? { label: language === 'en' ? 'Teacher & Admin' : 'শিক্ষক ও এডমিন', color: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300' } :
+              item.category === 'student' ? { label: language === 'en' ? 'Student' : 'শিক্ষার্থী', color: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300' } :
+              { label: language === 'en' ? 'Client & Tech' : 'ক্লায়েন্ট ও টেকনোলজি', color: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300' };
 
             return (
               <div
@@ -468,7 +735,7 @@ export default function UserGuide() {
                             </p>
                             {step.tip && (
                               <div className="mt-2.5 ml-6 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs text-amber-800 dark:text-amber-300">
-                                <strong>💡 টিপস:</strong> {step.tip}
+                                <strong>💡 {language === 'en' ? 'Tip:' : 'টিপস:'}</strong> {step.tip}
                               </div>
                             )}
                           </div>
@@ -486,21 +753,25 @@ export default function UserGuide() {
       {/* Footer Quick Links */}
       <div className="mt-12 p-6 sm:p-8 bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
         <div>
-          <h3 className="font-bold text-lg text-gray-900 dark:text-white">এখনই প্ল্যাটফর্মটি ব্যবহার করুন</h3>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">সব ফিচার রেডি। আপনার পছন্দের সেকশনে সরাসরি চলে যান।</p>
+          <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+            {language === 'en' ? 'Start Using the Platform Now' : 'এখনই প্ল্যাটফর্মটি ব্যবহার করুন'}
+          </h3>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">
+            {language === 'en' ? 'All features are ready. Jump directly into your preferred section.' : 'সব ফিচার রেডি। আপনার পছন্দের সেকশনে সরাসরি চলে যান।'}
+          </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <Link
             to="/exams"
             className="flex-1 sm:flex-initial px-5 py-2.5 bg-primary-light hover:bg-primary-dark text-white rounded-xl text-xs font-bold transition-all text-center shadow-sm"
           >
-            পরীক্ষা সমূহ →
+            {language === 'en' ? 'Exams Catalog →' : 'পরীক্ষা সমূহ →'}
           </Link>
           <Link
             to="/courses"
             className="flex-1 sm:flex-initial px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold transition-all text-center"
           >
-            প্যাকেজ সমূহ →
+            {language === 'en' ? 'Course Packages →' : 'প্যাকেজ সমূহ →'}
           </Link>
         </div>
       </div>

@@ -3,11 +3,13 @@ import { motion } from 'framer-motion';
 import { BarChart3, TrendingUp, Target, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 export default function Performance() {
   const { user } = useAuth();
+  const { t, toLangNumber } = useLanguage();
   const [stats, setStats] = useState({ total: 0, average: '0', highest: 0 });
   const [recentResults, setRecentResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,14 +80,6 @@ export default function Performance() {
     fetchStats();
   }, [user]);
 
-  const toBengaliNumber = (num: number | string) => {
-    if (num === null || num === undefined || num === '' || Number.isNaN(Number(num))) {
-      return '০';
-    }
-    const bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-    return num.toString().replace(/\d/g, (d) => bengaliDigits[parseInt(d)]);
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -105,8 +99,8 @@ export default function Performance() {
           <BarChart3 size={32} />
         </div>
         <div>
-          <h1 className="text-3xl font-heading font-bold text-gray-900 dark:text-white">পারফরম্যান্স অ্যানালাইসিস</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">আপনার পরীক্ষার ওভারঅল অগ্রগতি এবং দুর্বলতা</p>
+          <h1 className="text-3xl font-heading font-bold text-gray-900 dark:text-white">{t('performanceAnalysis')}</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">{t('performanceSubtitle')}</p>
         </div>
       </div>
 
@@ -116,8 +110,8 @@ export default function Performance() {
             <Target size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">মোট পরীক্ষা</p>
-            <h3 className="text-2xl font-bold">{toBengaliNumber(stats.total)}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('totalExamsCount')}</p>
+            <h3 className="text-2xl font-bold">{toLangNumber(stats.total)}</h3>
           </div>
         </div>
 
@@ -126,8 +120,8 @@ export default function Performance() {
             <Award size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">গড় মার্কস</p>
-            <h3 className="text-2xl font-bold">{toBengaliNumber(stats.average)}%</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('averageMarks')}</p>
+            <h3 className="text-2xl font-bold">{toLangNumber(stats.average)}%</h3>
           </div>
         </div>
 
@@ -136,8 +130,8 @@ export default function Performance() {
             <TrendingUp size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">সর্বোচ্চ মার্কস</p>
-            <h3 className="text-2xl font-bold">{toBengaliNumber(stats.highest)}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('highestMarks')}</p>
+            <h3 className="text-2xl font-bold">{toLangNumber(stats.highest)}</h3>
           </div>
         </div>
       </div>
@@ -146,23 +140,23 @@ export default function Performance() {
         <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-6 md:p-8 mb-10 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">সাম্প্রতিক পরীক্ষার ফলাফল (ট্রেন্ড)</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">মার্কস অনুযায়ী স্তম্ভের উচ্চতা ও রঙ স্বয়ংক্রিয়ভাবে পরিবর্তিত হয়</p>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('recentExamsTrend')}</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('trendSubtitle')}</p>
             </div>
 
             {/* Performance Legend */}
             <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
               <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-800">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                <span>৭০%+ (চমৎকার - সবুজ)</span>
+                <span>{t('legendHigh')}</span>
               </div>
               <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-md border border-amber-200 dark:border-amber-800">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                <span>৪০%-৬৯% (মধ্যম - হলুদ)</span>
+                <span>{t('legendMedium')}</span>
               </div>
               <div className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 px-2 py-1 rounded-md border border-rose-200 dark:border-rose-800">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                <span>৪০% এর কম (দুর্বল - লাল)</span>
+                <span>{t('legendLow')}</span>
               </div>
             </div>
           </div>
@@ -173,7 +167,7 @@ export default function Performance() {
             <div className="absolute inset-x-0 top-6 bottom-14 flex flex-col justify-between pointer-events-none text-[10px] text-gray-400 pl-8">
               {[100, 75, 50, 25, 0].map((val) => (
                 <div key={val} className="flex items-center w-full">
-                  <span className="w-8 -ml-8 text-right pr-2 shrink-0 select-none">{toBengaliNumber(val)}%</span>
+                  <span className="w-8 -ml-8 text-right pr-2 shrink-0 select-none">{toLangNumber(val)}%</span>
                   <div className="w-full border-b border-gray-100 dark:border-gray-800"></div>
                 </div>
               ))}
@@ -197,19 +191,16 @@ export default function Performance() {
                 const displayPercentage = Math.round(rawPercentage);
                 const isNegative = score < 0;
 
-                // Dynamic Color Coding based on performance:
-                // High (>= 70%): Green
-                // Medium (40% - 69%): Yellow
-                // Low (< 40% or negative): Red
+                // Dynamic Color Coding based on performance
                 let colorClass = 'from-emerald-500 to-green-600 border-emerald-400';
-                let statusText = 'চমৎকার পারফরম্যান্স';
+                let statusText = t('excellentPerformance');
 
                 if (isNegative || rawPercentage < 40) {
                   colorClass = 'from-rose-500 to-red-600 border-rose-400';
-                  statusText = isNegative ? 'মাইনাস মার্কিং' : 'বিশেষ মনোযোগ প্রয়োজন';
+                  statusText = isNegative ? t('negativeMarkingText') : t('needsAttention');
                 } else if (rawPercentage < 70) {
                   colorClass = 'from-amber-400 to-yellow-500 border-amber-400';
-                  statusText = 'সন্তোষজনক / মধ্যম';
+                  statusText = t('satisfactoryPerformance');
                 }
 
                 // Minimum height so low or negative scores are still visible and clickable
@@ -223,7 +214,7 @@ export default function Performance() {
                     <div className="opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 absolute -top-12 z-20 flex flex-col items-center">
                       <div className="bg-gray-900/95 dark:bg-gray-800/95 text-white text-xs py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap flex flex-col items-center gap-0.5 border border-gray-700">
                         <span className="font-bold">
-                          {toBengaliNumber(score)} / {toBengaliNumber(outOf)} ({toBengaliNumber(displayPercentage)}%)
+                          {toLangNumber(score)} / {toLangNumber(outOf)} ({toLangNumber(displayPercentage)}%)
                         </span>
                         <span className="text-[10px] text-gray-300">{statusText}</span>
                       </div>
@@ -240,7 +231,7 @@ export default function Performance() {
                       {/* Score Badge inside bar when high enough */}
                       {barHeightPercent > 25 && (
                         <span className="text-[10px] font-bold text-white drop-shadow-xs opacity-90 group-hover:opacity-100 hidden sm:inline">
-                          {toBengaliNumber(displayPercentage)}%
+                          {toLangNumber(displayPercentage)}%
                         </span>
                       )}
                     </motion.div>
@@ -263,15 +254,15 @@ export default function Performance() {
           <div className="w-20 h-20 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
             <BarChart3 size={40} className="text-gray-400" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">অ্যানালাইসিস প্রস্তুত হচ্ছে...</h2>
+          <h2 className="text-2xl font-bold mb-2">{t('analysisPreparing')}</h2>
           <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto mb-6">
-            পর্যাপ্ত ডেটা পাওয়া যায়নি। আরো কিছু পরীক্ষা দিলে এখানে আপনার বিষয়ভিত্তিক দুর্বলতা এবং গ্রাফিক্যাল রিপোর্ট দেখতে পাবেন!
+            {t('notEnoughDataPerformance')}
           </p>
           <Link 
             to="/exams"
             className="inline-flex items-center gap-2 px-6 py-3 bg-primary-light text-white rounded-xl font-medium hover:bg-primary-dark transition-colors"
           >
-            পরীক্ষা দিতে থাকুন
+            {t('keepTakingExams')}
           </Link>
         </div>
       )}

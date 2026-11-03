@@ -9,6 +9,7 @@ import { ADMISSION_PRESETS, isSubjectAllowed } from '../lib/admissionRules';
 import { MathText } from '../components/MathText';
 import { getCorrectAnswerIndex } from '../lib/questionUtils';
 import { isExamUnlocked, type PackageAccessItem } from '../lib/accessControl';
+import { useLanguage } from '../context/LanguageContext';
 
 interface Question {
   id: string;
@@ -62,6 +63,7 @@ export default function TakeExam() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, userData, role, loading: authLoading } = useAuth();
+  const { t, language, toLangNumber } = useLanguage();
   
   const [exam, setExam] = useState<ExamData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -110,7 +112,9 @@ export default function TakeExam() {
               })) as PackageAccessItem[];
 
               if (!isExamUnlocked({ id, isPaid: true }, userData, pkgs)) {
-                alert('এই পরীক্ষাটি পেইড এবং আপনার জন্য এখনও আনলক করা হয়নি। পরীক্ষাটি দেওয়ার জন্য উপযুক্ত প্যাকেজ কিনুন অথবা শিক্ষকের সাথে যোগাযোগ করুন।');
+                alert(language === 'bn' 
+                  ? 'এই পরীক্ষাটি পেইড এবং আপনার জন্য এখনও আনলক করা হয়নি। পরীক্ষাটি দেওয়ার জন্য উপযুক্ত প্যাকেজ কিনুন অথবা শিক্ষকের সাথে যোগাযোগ করুন।' 
+                  : 'This exam is paid and has not been unlocked for you yet. Please purchase a package or contact your teacher.');
                 navigate('/exams');
                 return;
               }
@@ -199,7 +203,7 @@ export default function TakeExam() {
               setTimeLeft(remaining);
             } else {
               localStorage.removeItem(`exam_progress_${id}`);
-              alert('পরীক্ষার নির্ধারিত সময়সীমা ইতোমধ্যে শেষ হয়ে গেছে!');
+              alert(language === 'bn' ? 'পরীক্ষার নির্ধারিত সময়সীমা ইতোমধ্যে শেষ হয়ে গেছে!' : 'The exam time limit has expired!');
               navigate('/exams');
               return;
             }
@@ -208,19 +212,19 @@ export default function TakeExam() {
             setTimeLeft(data.timeLimit * 60);
           }
         } else {
-          alert('পরীক্ষাটি খুঁজে পাওয়া যায়নি!');
+          alert(language === 'bn' ? 'পরীক্ষাটি খুঁজে পাওয়া যায়নি!' : 'Exam not found!');
           navigate('/exams');
         }
       } catch (error) {
         console.error(error);
-        alert('সমস্যা হয়েছে!');
+        alert(language === 'bn' ? 'সমস্যা হয়েছে!' : 'An unexpected error occurred!');
       } finally {
         setLoading(false);
       }
     };
     
     fetchExam();
-  }, [id, navigate, userData, role, authLoading]);
+  }, [id, navigate, userData, role, authLoading, language]);
 
   // Timer
   useEffect(() => {
@@ -250,18 +254,24 @@ export default function TakeExam() {
 
       if (pattern === 'du_a' || pattern === 'gst_a') {
         if (selectedDuGstOptionals.length !== 2) {
-          alert('অনুগ্রহ করে ঐচ্ছিক/বিকল্প তালিকা থেকে ঠিক ২টি বিষয় নির্বাচন করুন।');
+          alert(language === 'bn' 
+            ? 'অনুগ্রহ করে ঐচ্ছিক/বিকল্প তালিকা থেকে ঠিক ২টি বিষয় নির্বাচন করুন।' 
+            : 'Please select exactly 2 subjects from the optional list.');
           return;
         }
         const hasScience = selectedDuGstOptionals.includes('math') || selectedDuGstOptionals.includes('biology');
         const languageCount = (selectedDuGstOptionals.includes('bangla') ? 1 : 0) + (selectedDuGstOptionals.includes('english') ? 1 : 0);
         
         if (!hasScience) {
-          alert('গণিত বা জীববিজ্ঞানের অন্তত একটি বিষয় অবশ্যই নির্বাচন করতে হবে।');
+          alert(language === 'bn' 
+            ? 'গণিত বা জীববিজ্ঞানের অন্তত একটি বিষয় অবশ্যই নির্বাচন করতে হবে।' 
+            : 'At least one of Mathematics or Biology must be selected.');
           return;
         }
         if (languageCount > 1) {
-          alert('৪র্থ বিষয়ের পরিবর্তে বাংলা অথবা ইংরেজি থেকে যেকোনো একটি বিষয় নির্বাচন করা যাবে। দুটি ভাষা একসাথে নেওয়া যাবে না।');
+          alert(language === 'bn' 
+            ? '৪র্থ বিষয়ের পরিবর্তে বাংলা অথবা ইংরেজি থেকে যেকোনো একটি বিষয় নির্বাচন করা যাবে। দুটি ভাষা একসাথে নেওয়া যাবে না।' 
+            : 'You can take either Bangla or English in place of 4th subject, not both.');
           return;
         }
         allowedKeys = ['physics', 'chemistry', ...selectedDuGstOptionals];
@@ -276,7 +286,9 @@ export default function TakeExam() {
         }
       } else if (pattern === 'cu_a') {
         if (selectedCuOptionals.length !== 3) {
-          alert('অনুগ্রহ করে ঐচ্ছিক ৪টি বিষয় থেকে ঠিক ৩টি বিষয় নির্বাচন করুন।');
+          alert(language === 'bn' 
+            ? 'অনুগ্রহ করে ঐচ্ছিক ৪টি বিষয় থেকে ঠিক ৩টি বিষয় নির্বাচন করুন।' 
+            : 'Please select exactly 3 subjects from the 4 optional subjects.');
           return;
         }
         allowedKeys = ['english', ...selectedCuOptionals];
@@ -317,7 +329,9 @@ export default function TakeExam() {
     // Validate optional bundle selection
     if (exam.hasSections && exam.optionalRules && exam.optionalRules.length > 0) {
       if (Object.keys(selectedOptionals).length !== exam.optionalRules.length) {
-        alert(`অনুগ্রহ করে প্রতিটি গুচ্ছ ঐচ্ছিক নিয়ম থেকে একটি করে অপশন বাছাই করুন।`);
+        alert(language === 'bn' 
+          ? `অনুগ্রহ করে প্রতিটি গুচ্ছ ঐচ্ছিক নিয়ম থেকে একটি করে অপশন বাছাই করুন।` 
+          : 'Please select one option from each group of optional rules.');
         return;
       }
       const chosenSubjects = exam.optionalRules.flatMap(rule => {
@@ -330,7 +344,9 @@ export default function TakeExam() {
     // Validate simple optional selection
     if (exam.hasSections && exam.optionalSelectionCount && exam.optionalSelectionCount > 0) {
       if (selectedSimpleOptionals.length !== exam.optionalSelectionCount) {
-        alert(`অনুগ্রহ করে সরল ঐচ্ছিক বিষয় থেকে ঠিক ${exam.optionalSelectionCount} টি বিষয় সিলেক্ট করুন।`);
+        alert(language === 'bn' 
+          ? `অনুগ্রহ করে সরল ঐচ্ছিক বিষয় থেকে ঠিক ${exam.optionalSelectionCount} টি বিষয় সিলেক্ট করুন।` 
+          : `Please select exactly ${exam.optionalSelectionCount} optional subjects.`);
         return;
       }
       allowedSubjects = [...allowedSubjects, ...selectedSimpleOptionals];
@@ -341,13 +357,17 @@ export default function TakeExam() {
       for (const rule of exam.groupRules) {
         const selected = selectedGroupSubjects[rule.id] || [];
         if (selected.length !== rule.totalRequired) {
-          alert(`"${rule.title}" নিয়মের জন্য মোট ${rule.totalRequired}টি বিষয় সিলেক্ট করতে হবে।`);
+          alert(language === 'bn' 
+            ? `"${rule.title}" নিয়মের জন্য মোট ${rule.totalRequired}টি বিষয় সিলেক্ট করতে হবে।` 
+            : `Please select ${rule.totalRequired} subjects for rule "${rule.title}".`);
           return;
         }
         for (const group of rule.groups) {
           const groupSelected = selected.filter(s => group.subjects.includes(s));
           if (groupSelected.length < group.minSelect || groupSelected.length > group.maxSelect) {
-            alert(`"${group.label}" থেকে সর্বনিম্ন ${group.minSelect}টি এবং সর্বোচ্চ ${group.maxSelect}টি বিষয় সিলেক্ট করা যাবে।`);
+            alert(language === 'bn' 
+              ? `"${group.label}" থেকে সর্বনিম্ন ${group.minSelect}টি এবং সর্বোচ্চ ${group.maxSelect}টি বিষয় সিলেক্ট করা যাবে।` 
+              : `Between ${group.minSelect} and ${group.maxSelect} subjects can be selected from "${group.label}".`);
             return;
           }
         }
@@ -431,7 +451,7 @@ export default function TakeExam() {
       examId: id,
       examTitle: exam.title,
       userId: user?.uid || 'guest',
-      userName: user?.displayName || user?.email?.split('@')[0] || 'শিক্ষার্থী',
+      userName: user?.displayName || user?.email?.split('@')[0] || (language === 'bn' ? 'শিক্ষার্থী' : 'Student'),
       userEmail: user?.email || '',
       answers,
       negativeMarking: neg,
@@ -452,18 +472,18 @@ export default function TakeExam() {
       navigate(`/result/${resultRef.id}`);
     } catch (error) {
       console.error(error);
-      alert('রেজাল্ট সেভ করতে সমস্যা হয়েছে।');
+      alert(language === 'bn' ? 'রেজাল্ট সেভ করতে সমস্যা হয়েছে।' : 'Failed to save exam results.');
       setIsSubmitting(false);
     }
   };
 
   const confirmSubmit = () => {
-    if (window.confirm('আপনি কি নিশ্চিত যে পরীক্ষাটি জমা দিতে চান?')) {
+    if (window.confirm(language === 'bn' ? 'আপনি কি নিশ্চিত যে পরীক্ষাটি জমা দিতে চান?' : 'Are you sure you want to submit the exam?')) {
       submitExam();
     }
   };
 
-  if (loading) return <div className="p-8 text-center">পরীক্ষা লোড হচ্ছে...</div>;
+  if (loading) return <div className="p-8 text-center">{t('loading')}</div>;
   if (!exam) return null;
 
   const formatTime = (seconds: number) => {
@@ -491,9 +511,13 @@ export default function TakeExam() {
               <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <AlertCircle size={32} />
               </div>
-              <h2 className="text-2xl font-bold text-center mb-4 text-gray-900 dark:text-white">সতর্কতা!</h2>
+              <h2 className="text-2xl font-bold text-center mb-4 text-gray-900 dark:text-white">
+                {language === 'bn' ? 'সতর্কতা!' : 'Attention!'}
+              </h2>
               <p className="text-gray-600 dark:text-gray-400 text-center mb-4 text-lg">
-                প্রতিটি প্রশ্নের উত্তর মাত্র একবারই দেওয়া যাবে। একবার কোনো অপশন সিলেক্ট করলে তা আর পরিবর্তন করা যাবে না। তাই সাবধানে উত্তর দিন।
+                {language === 'bn' 
+                  ? 'প্রতিটি প্রশ্নের উত্তর মাত্র একবারই দেওয়া যাবে। একবার কোনো অপশন সিলেক্ট করলে তা আর পরিবর্তন করা যাবে না। তাই সাবধানে উত্তর দিন।' 
+                  : 'You can answer each question only once. Once selected, options cannot be changed. Please choose carefully.'}
               </p>
 
               {/* Negative Marking Badge Notice */}
@@ -504,11 +528,11 @@ export default function TakeExam() {
               }`}>
                 <span>
                   {currentNeg === 0 
-                    ? '🛡️ নেগেটিভ মার্কিং: এই পরীক্ষায় কোনো নেগেটিভ মার্কিং নেই (০)।' 
-                    : `⚠️ নেগেটিভ মার্কিং: প্রতি ভুল উত্তরের জন্য -${currentNeg} নম্বর কাটা যাবে।`}
+                    ? (language === 'bn' ? '🛡️ নেগেটিভ মার্কিং: এই পরীক্ষায় কোনো নেগেটিভ মার্কিং নেই (০)।' : '🛡️ Negative Marking: No negative marking for this exam (0).') 
+                    : (language === 'bn' ? `⚠️ নেগেটিভ মার্কিং: প্রতি ভুল উত্তরের জন্য -${toLangNumber(currentNeg)} নম্বর কাটা যাবে।` : `⚠️ Negative Marking: -${toLangNumber(currentNeg)} marks deducted for each wrong answer.`)}
                 </span>
                 <span className="text-[11px] opacity-75">
-                  প্রতি প্রশ্নের মান: {exam.marksPerQuestion || 1}
+                  {language === 'bn' ? `প্রতি প্রশ্নের মান: ${toLangNumber(exam.marksPerQuestion || 1)}` : `Marks/Question: ${toLangNumber(exam.marksPerQuestion || 1)}`}
                 </span>
               </div>
               
@@ -519,10 +543,10 @@ export default function TakeExam() {
                   <div className="bg-blue-50 dark:bg-blue-950/30 p-3.5 rounded-xl border border-blue-200 dark:border-blue-800 flex items-center justify-between">
                     <div>
                       <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider block">
-                        অফিসিয়াল ভর্তি পরীক্ষা নিয়ম
+                        {language === 'bn' ? 'অফিসিয়াল ভর্তি পরীক্ষা নিয়ম' : 'Official Admission Exam Pattern'}
                       </span>
                       <h4 className="font-bold text-sm text-gray-900 dark:text-white">
-                        {ADMISSION_PRESETS.find(p => p.id === exam.admissionPattern)?.name || 'ভর্তি পরীক্ষা'}
+                        {ADMISSION_PRESETS.find(p => p.id === exam.admissionPattern)?.name || (language === 'bn' ? 'ভর্তি পরীক্ষা' : 'Admission Exam')}
                       </h4>
                     </div>
                   </div>
@@ -532,13 +556,15 @@ export default function TakeExam() {
                     <div className="space-y-4">
                       {/* Compulsory */}
                       <div className="bg-gray-50 dark:bg-gray-800 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <p className="text-xs font-bold text-gray-500 uppercase mb-2">বাধ্যতামূলক বিষয় (ডিফল্ট সিলেক্টেড):</p>
+                        <p className="text-xs font-bold text-gray-500 uppercase mb-2">
+                          {language === 'bn' ? 'বাধ্যতামূলক বিষয় (ডিফল্ট সিলেক্টেড):' : 'Compulsory Subjects (Selected by Default):'}
+                        </p>
                         <div className="flex gap-2">
                           <span className="text-xs px-2.5 py-1 bg-white dark:bg-gray-700 text-green-700 dark:text-green-300 font-semibold rounded-lg border border-green-200 dark:border-green-800 flex items-center gap-1 shadow-2xs">
-                            <CheckCircle2 size={13} /> পদার্থবিজ্ঞান
+                            <CheckCircle2 size={13} /> {language === 'bn' ? 'পদার্থবিজ্ঞান' : 'Physics'}
                           </span>
                           <span className="text-xs px-2.5 py-1 bg-white dark:bg-gray-700 text-green-700 dark:text-green-300 font-semibold rounded-lg border border-green-200 dark:border-green-800 flex items-center gap-1 shadow-2xs">
-                            <CheckCircle2 size={13} /> রসায়ন
+                            <CheckCircle2 size={13} /> {language === 'bn' ? 'রসায়ন' : 'Chemistry'}
                           </span>
                         </div>
                       </div>
@@ -548,7 +574,10 @@ export default function TakeExam() {
                         <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2">
                           <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-600" />
                           <div>
-                            <strong>বিশেষ শর্ত (SUST):</strong> সাস্টের ইঞ্জিনিয়ারিং বা ফিজিক্যাল সায়েন্সের বিষয় পেতে হলে গণিত এবং বায়োলজিক্যাল সায়েন্স পেতে হলে জীববিজ্ঞান বাধ্যতামূলক।
+                            <strong>{language === 'bn' ? 'বিশেষ শর্ত (SUST):' : 'Special Condition (SUST):'}</strong>{' '}
+                            {language === 'bn' 
+                              ? 'সাস্টের ইঞ্জিনিয়ারিং বা ফিজিক্যাল সায়েন্সের বিষয় পেতে হলে গণিত এবং বায়োলজিক্যাল সায়েন্স পেতে হলে জীববিজ্ঞান বাধ্যতামূলক।' 
+                              : 'Mathematics is mandatory for SUST Engineering/Physical Science, and Biology for Biological Science.'}
                           </div>
                         </div>
                       )}
@@ -557,22 +586,24 @@ export default function TakeExam() {
                       <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <div className="flex justify-between items-center mb-2">
                           <p className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                            ঐচ্ছিক ও বিকল্প বিষয় (যেকোনো ২টি নির্বাচন করুন):
+                            {language === 'bn' ? 'ঐচ্ছিক ও বিকল্প বিষয় (যেকোনো ২টি নির্বাচন করুন):' : 'Optional & Alternative Subjects (Select any 2):'}
                           </p>
                           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${selectedDuGstOptionals.length === 2 ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'}`}>
-                            {selectedDuGstOptionals.length}/২টি নির্বাচিত
+                            {toLangNumber(selectedDuGstOptionals.length)}/{toLangNumber(2)} {language === 'bn' ? 'টি নির্বাচিত' : 'Selected'}
                           </span>
                         </div>
                         <p className="text-[11px] text-gray-500 mb-3">
-                          * ৪র্থ বিষয়ের পরিবর্তে বাংলা অথবা ইংরেজি থেকে যেকোনো ১টি নিতে পারেন। গণিত বা জীববিজ্ঞানের অন্তত ১টি থাকতে হবে।
+                          {language === 'bn' 
+                            ? '* ৪র্থ বিষয়ের পরিবর্তে বাংলা অথবা ইংরেজি থেকে যেকোনো ১টি নিতে পারেন। গণিত বা জীববিজ্ঞানের অন্তত ১টি থাকতে হবে।' 
+                            : '* You can select either Bangla or English in place of 4th subject. At least one of Math or Biology is required.'}
                         </p>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           {[
-                            { key: 'math', label: 'উচ্চতর গণিত (Higher Math)', isAlt: false },
-                            { key: 'biology', label: 'জীববিজ্ঞান (Biology)', isAlt: false },
-                            { key: 'bangla', label: 'বাংলা (বিকল্প বিষয়)', isAlt: true },
-                            { key: 'english', label: 'ইংরেজি (বিকল্প বিষয়)', isAlt: true }
+                            { key: 'math', label: language === 'bn' ? 'উচ্চতর গণিত (Higher Math)' : 'Higher Mathematics', isAlt: false },
+                            { key: 'biology', label: language === 'bn' ? 'জীববিজ্ঞান (Biology)' : 'Biology', isAlt: false },
+                            { key: 'bangla', label: language === 'bn' ? 'বাংলা (বিকল্প বিষয়)' : 'Bangla (Alternative)', isAlt: true },
+                            { key: 'english', label: language === 'bn' ? 'ইংরেজি (বিকল্প বিষয়)' : 'English (Alternative)', isAlt: true }
                           ].map(opt => {
                             const isChecked = selectedDuGstOptionals.includes(opt.key);
                             return (
@@ -593,12 +624,12 @@ export default function TakeExam() {
                                       if (selectedDuGstOptionals.length < 2) {
                                         // If selecting language and other language already selected
                                         if (opt.isAlt && (selectedDuGstOptionals.includes('bangla') || selectedDuGstOptionals.includes('english'))) {
-                                          alert('বাংলা এবং ইংরেজি দুটি একসাথে নেওয়া যাবে না। যেকোনো একটি ভাষা নির্বাচন করুন।');
+                                          alert(language === 'bn' ? 'বাংলা এবং ইংরেজি দুটি একসাথে নেওয়া যাবে না। যেকোনো একটি ভাষা নির্বাচন করুন।' : 'Bangla and English cannot be selected together. Choose one.');
                                           return;
                                         }
                                         setSelectedDuGstOptionals([...selectedDuGstOptionals, opt.key]);
                                       } else {
-                                        alert('আপনি ইতিমধ্যে ২টি বিষয় নির্বাচন করেছেন। অন্য বিষয় নিতে চাইলে আগে একটি আনচেক করুন।');
+                                        alert(language === 'bn' ? 'আপনি ইতিমধ্যে ২টি বিষয় নির্বাচন করেছেন। অন্য বিষয় নিতে চাইলে আগে একটি আনচেক করুন।' : 'You have already selected 2 subjects. Uncheck one to change.');
                                       }
                                     } else {
                                       setSelectedDuGstOptionals(selectedDuGstOptionals.filter(k => k !== opt.key));
@@ -619,33 +650,35 @@ export default function TakeExam() {
                   {exam.admissionPattern === 'ru_c' && (
                     <div className="space-y-4">
                       <div className="bg-gray-50 dark:bg-gray-800 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <p className="text-xs font-bold text-gray-500 uppercase mb-2">বাধ্যতামূলক বিষয়:</p>
+                        <p className="text-xs font-bold text-gray-500 uppercase mb-2">
+                          {language === 'bn' ? 'বাধ্যতামূলক বিষয়:' : 'Compulsory Subjects:'}
+                        </p>
                         <div className="flex flex-wrap gap-2">
                           <span className="text-xs px-2.5 py-1 bg-white dark:bg-gray-700 text-green-700 dark:text-green-300 font-semibold rounded-lg border border-green-200 dark:border-green-800 flex items-center gap-1 shadow-2xs">
-                            <CheckCircle2 size={13} /> পদার্থবিজ্ঞান
+                            <CheckCircle2 size={13} /> {language === 'bn' ? 'পদার্থবিজ্ঞান' : 'Physics'}
                           </span>
                           <span className="text-xs px-2.5 py-1 bg-white dark:bg-gray-700 text-green-700 dark:text-green-300 font-semibold rounded-lg border border-green-200 dark:border-green-800 flex items-center gap-1 shadow-2xs">
-                            <CheckCircle2 size={13} /> রসায়ন
+                            <CheckCircle2 size={13} /> {language === 'bn' ? 'রসায়ন' : 'Chemistry'}
                           </span>
                           <span className="text-xs px-2.5 py-1 bg-white dark:bg-gray-700 text-green-700 dark:text-green-300 font-semibold rounded-lg border border-green-200 dark:border-green-800 flex items-center gap-1 shadow-2xs">
-                            <CheckCircle2 size={13} /> আইসিটি (ICT)
+                            <CheckCircle2 size={13} /> {language === 'bn' ? 'আইসিটি (ICT)' : 'ICT'}
                           </span>
                         </div>
                       </div>
 
                       <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <p className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                          ঐচ্ছিক ব্লক (যেকোনো ১টি নির্বাচন করুন):
+                          {language === 'bn' ? 'ঐচ্ছিক ব্লক (যেকোনো ১টি নির্বাচন করুন):' : 'Optional Block (Select any 1):'}
                         </p>
                         <p className="text-[11px] text-gray-500 mb-3">
-                          * বিজ্ঞান ইউনিটে বাংলা বা ইংরেজি নির্বাচনের কোনো সুযোগ নেই।
+                          {language === 'bn' ? '* বিজ্ঞান ইউনিটে বাংলা বা ইংরেজি নির্বাচনের কোনো সুযোগ নেই।' : '* No language alternative is allowed in Science unit.'}
                         </p>
 
                         <div className="space-y-2">
                           {[
-                            { value: 'both', label: 'গণিত + জীববিজ্ঞান (উভয় বিষয়)' },
-                            { value: 'math_only', label: 'শুধুমাত্র গণিত' },
-                            { value: 'bio_only', label: 'শুধুমাত্র জীববিজ্ঞান' }
+                            { value: 'both', label: language === 'bn' ? 'গণিত + জীববিজ্ঞান (উভয় বিষয়)' : 'Mathematics + Biology (Both)' },
+                            { value: 'math_only', label: language === 'bn' ? 'শুধুমাত্র গণিত' : 'Mathematics Only' },
+                            { value: 'bio_only', label: language === 'bn' ? 'শুধুমাত্র জীববিজ্ঞান' : 'Biology Only' }
                           ].map(block => (
                             <label
                               key={block.value}
@@ -675,28 +708,30 @@ export default function TakeExam() {
                   {exam.admissionPattern === 'cu_a' && (
                     <div className="space-y-4">
                       <div className="bg-gray-50 dark:bg-gray-800 p-3.5 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <p className="text-xs font-bold text-gray-500 uppercase mb-2">বাধ্যতামূলক বিষয়:</p>
+                        <p className="text-xs font-bold text-gray-500 uppercase mb-2">
+                          {language === 'bn' ? 'বাধ্যতামূলক বিষয়:' : 'Compulsory Subject:'}
+                        </p>
                         <span className="text-xs px-2.5 py-1 bg-white dark:bg-gray-700 text-green-700 dark:text-green-300 font-semibold rounded-lg border border-green-200 dark:border-green-800 flex items-center gap-1 shadow-2xs inline-flex">
-                          <CheckCircle2 size={13} /> ইংরেজি (English)
+                          <CheckCircle2 size={13} /> {language === 'bn' ? 'ইংরেজি (English)' : 'English'}
                         </span>
                       </div>
 
                       <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                         <div className="flex justify-between items-center mb-2">
                           <p className="text-xs font-bold text-gray-700 dark:text-gray-300">
-                            ঐচ্ছিক বিষয় (যেকোনো ৩টি নির্বাচন করুন):
+                            {language === 'bn' ? 'ঐচ্ছিক বিষয় (যেকোনো ৩টি নির্বাচন করুন):' : 'Optional Subjects (Select any 3):'}
                           </p>
                           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${selectedCuOptionals.length === 3 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                            {selectedCuOptionals.length}/৩টি নির্বাচিত
+                            {toLangNumber(selectedCuOptionals.length)}/{toLangNumber(3)} {language === 'bn' ? 'টি নির্বাচিত' : 'Selected'}
                           </span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           {[
-                            { key: 'physics', label: 'পদার্থবিজ্ঞান' },
-                            { key: 'chemistry', label: 'রসায়ন' },
-                            { key: 'math', label: 'গণিত' },
-                            { key: 'biology', label: 'জীববিজ্ঞান' }
+                            { key: 'physics', label: language === 'bn' ? 'পদার্থবিজ্ঞান' : 'Physics' },
+                            { key: 'chemistry', label: language === 'bn' ? 'রসায়ন' : 'Chemistry' },
+                            { key: 'math', label: language === 'bn' ? 'গণিত' : 'Mathematics' },
+                            { key: 'biology', label: language === 'bn' ? 'জীববিজ্ঞান' : 'Biology' }
                           ].map(opt => {
                             const isChecked = selectedCuOptionals.includes(opt.key);
                             return (
@@ -716,7 +751,7 @@ export default function TakeExam() {
                                       if (selectedCuOptionals.length < 3) {
                                         setSelectedCuOptionals([...selectedCuOptionals, opt.key]);
                                       } else {
-                                        alert('আপনি ইতিমধ্যে ৩টি বিষয় নির্বাচন করেছেন।');
+                                        alert(language === 'bn' ? 'আপনি ইতিমধ্যে ৩টি বিষয় নির্বাচন করেছেন।' : 'You have already selected 3 subjects.');
                                       }
                                     } else {
                                       setSelectedCuOptionals(selectedCuOptionals.filter(k => k !== opt.key));
@@ -733,10 +768,12 @@ export default function TakeExam() {
                     </div>
                   )}
 
-                  {/* ALL-COMPULSORY PRESETS (BUET, CKRUET, BUTEX, Medical, Agri GST, JU A, JU D) */}
+                  {/* ALL-COMPULSORY PRESETS */}
                   {['buet', 'ckruet', 'butex', 'medical', 'agri_gst', 'ju_a', 'ju_d'].includes(exam.admissionPattern) && (
                     <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 space-y-3">
-                      <p className="text-xs font-bold text-gray-500 uppercase">সকল বিষয় বাধ্যতামূলক:</p>
+                      <p className="text-xs font-bold text-gray-500 uppercase">
+                        {language === 'bn' ? 'সকল বিষয় বাধ্যতামূলক:' : 'All Subjects Compulsory:'}
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {ADMISSION_PRESETS.find(p => p.id === exam.admissionPattern)?.compulsoryDisplay.map(sub => (
                           <span key={sub} className="text-xs px-2.5 py-1 bg-white dark:bg-gray-700 text-green-700 dark:text-green-300 font-semibold rounded-lg border border-green-200 dark:border-green-800 flex items-center gap-1 shadow-2xs">
@@ -745,7 +782,7 @@ export default function TakeExam() {
                         ))}
                       </div>
                       <p className="text-[11px] text-gray-500 pt-1">
-                        ℹ️ এই পরীক্ষায় কোনো ঐচ্ছিক বিষয় নেই। পরীক্ষায় অন্তর্ভুক্ত সকল বিষয়ের উত্তর দেওয়া বাধ্যতামূলক।
+                        {language === 'bn' ? 'ℹ️ এই পরীক্ষায় কোনো ঐচ্ছিক বিষয় নেই। পরীক্ষায় অন্তর্ভুক্ত সকল বিষয়ের উত্তর দেওয়া বাধ্যতামূলক।' : 'ℹ️ There are no optional subjects in this exam. Answering all subjects is mandatory.'}
                       </p>
                     </div>
                   )}
@@ -755,7 +792,11 @@ export default function TakeExam() {
                 <>
                   {exam.hasSections && exam.simpleOptionalSubjects && exam.simpleOptionalSubjects.length > 0 && exam.optionalSelectionCount && exam.optionalSelectionCount > 0 && (
                     <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                      <p className="font-bold mb-3 text-sm">সরল ঐচ্ছিক বিষয় (যেকোনো {exam.optionalSelectionCount} টি সিলেক্ট করুন):</p>
+                      <p className="font-bold mb-3 text-sm">
+                        {language === 'bn' 
+                          ? `সরল ঐচ্ছিক বিষয় (যেকোনো ${toLangNumber(exam.optionalSelectionCount)} টি সিলেক্ট করুন):` 
+                          : `Optional Subjects (Select any ${toLangNumber(exam.optionalSelectionCount)}):`}
+                      </p>
                       <div className="flex flex-col gap-2">
                         {exam.simpleOptionalSubjects.map((subj) => (
                           <label key={subj} className="flex items-center gap-2 text-sm cursor-pointer">
@@ -784,12 +825,12 @@ export default function TakeExam() {
                     <div className="mb-6 space-y-4">
                       {exam.groupRules.map((rule) => (
                         <div key={rule.id} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                          <p className="font-bold mb-3 text-sm">{rule.title} (মোট {rule.totalRequired}টি সিলেক্ট করুন):</p>
+                          <p className="font-bold mb-3 text-sm">{rule.title} ({language === 'bn' ? `মোট ${toLangNumber(rule.totalRequired)}টি সিলেক্ট করুন` : `Select total ${toLangNumber(rule.totalRequired)}`}):</p>
                           <div className="space-y-4">
                             {rule.groups.map((group, groupIdx) => (
                               <div key={groupIdx} className="border border-gray-200 dark:border-gray-700 p-3 rounded-lg bg-white dark:bg-gray-900">
                                 <p className="text-xs font-semibold text-gray-500 mb-2">
-                                  {group.label} (সর্বনিম্ন {group.minSelect}টি, সর্বোচ্চ {group.maxSelect}টি)
+                                  {group.label} ({language === 'bn' ? `সর্বনিম্ন ${toLangNumber(group.minSelect)}টি, সর্বোচ্চ ${toLangNumber(group.maxSelect)}টি` : `Min ${toLangNumber(group.minSelect)}, Max ${toLangNumber(group.maxSelect)}`})
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                   {group.subjects.map(subj => {
@@ -804,7 +845,7 @@ export default function TakeExam() {
                                     return (
                                       <label key={subj} className={`flex items-center gap-2 text-sm px-2 py-1.5 border rounded-md transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800'} ${isSelected ? 'border-primary-light bg-primary-light/10 text-primary-light dark:text-primary-dark dark:bg-primary-dark/20 dark:border-primary-dark' : 'border-gray-200 dark:border-gray-700'}`}>
                                         <input 
-                                          type="checkbox"
+                                          type="checkbox" 
                                           disabled={disabled}
                                           checked={isSelected}
                                           onChange={(e) => {
@@ -858,7 +899,7 @@ export default function TakeExam() {
                                   <span className="font-medium">{choice.label}</span>
                                   {choice.subjects && choice.subjects.length > 0 && (
                                     <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                      বিষয়: {choice.subjects.join(' + ')}
+                                      {language === 'bn' ? 'বিষয়:' : 'Subjects:'} {choice.subjects.join(' + ')}
                                     </span>
                                   )}
                                 </div>
@@ -876,7 +917,7 @@ export default function TakeExam() {
                 onClick={startExam}
                 className="w-full py-3 bg-primary-light text-white rounded-xl font-bold text-lg hover:bg-primary-dark transition-colors"
               >
-                বুঝতে পেরেছি এবং শুরু করুন
+                {language === 'bn' ? 'বুঝতে পেরেছি এবং শুরু করুন' : 'I Understand & Start Exam'}
               </button>
             </motion.div>
           </div>
@@ -893,7 +934,7 @@ export default function TakeExam() {
                 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' 
                 : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
             }`}>
-              {currentNeg === 0 ? 'নেগেটিভ নেই (০)' : `নেগেটিভ -${currentNeg}`}
+              {currentNeg === 0 ? t('noNegative') : `${t('negative')} -${toLangNumber(currentNeg)}`}
             </span>
           </div>
           <div className="flex gap-2 mt-1">
@@ -901,13 +942,13 @@ export default function TakeExam() {
               onClick={() => setViewMode('all')} 
               className={`text-xs px-3 py-1 rounded-full ${viewMode === 'all' ? 'bg-primary-light text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}
             >
-              সব প্রশ্ন একসাথে
+              {language === 'bn' ? 'সব প্রশ্ন একসাথে' : 'All Questions'}
             </button>
             <button 
               onClick={() => setViewMode('single')} 
               className={`text-xs px-3 py-1 rounded-full ${viewMode === 'single' ? 'bg-primary-light text-white' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}
             >
-              একটি একটি করে
+              {language === 'bn' ? 'একটি একটি করে' : 'One by One'}
             </button>
           </div>
         </div>
@@ -922,7 +963,7 @@ export default function TakeExam() {
             disabled={isSubmitting}
             className="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
           >
-            {isSubmitting ? 'জমা হচ্ছে...' : 'জমা দিন'}
+            {isSubmitting ? (language === 'bn' ? 'জমা হচ্ছে...' : 'Submitting...') : t('submitExamBtn')}
           </button>
         </div>
       </div>
@@ -938,7 +979,9 @@ export default function TakeExam() {
               className="mb-4 bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 w-72 md:w-80 max-h-[60vh] overflow-y-auto"
             >
               <div className="flex justify-between items-center mb-4 sticky top-0 bg-white dark:bg-gray-900 pb-2 border-b border-gray-100 dark:border-gray-800 z-10">
-                <h3 className="font-bold text-gray-800 dark:text-gray-200">প্রশ্ন তালিকা</h3>
+                <h3 className="font-bold text-gray-800 dark:text-gray-200">
+                  {language === 'bn' ? 'প্রশ্ন তালিকা' : 'Question Grid'}
+                </h3>
                 <button 
                   onClick={() => setIsGridOpen(false)} 
                   className="p-1.5 hover:bg-gray-100 rounded-full dark:hover:bg-gray-800 transition-colors"
@@ -975,7 +1018,7 @@ export default function TakeExam() {
                             : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                         }`}
                     >
-                      {activeIdx + 1}
+                      {toLangNumber(activeIdx + 1)}
                     </button>
                   );
                 })}
@@ -987,7 +1030,7 @@ export default function TakeExam() {
         <button 
           onClick={() => setIsGridOpen(!isGridOpen)}
           className="w-14 h-14 bg-primary-light text-white rounded-full flex items-center justify-center shadow-lg hover:bg-primary-dark hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-primary-light/30"
-          title="প্রশ্ন তালিকা দেখুন"
+          title={language === 'bn' ? 'প্রশ্ন তালিকা দেখুন' : 'View Question Grid'}
         >
           {isGridOpen ? <X size={24} /> : <LayoutGrid size={24} />}
         </button>
@@ -1005,7 +1048,7 @@ export default function TakeExam() {
               <div key={originalIdx} id={`q-${originalIdx}`}>
                 {showSubjectHeader && (
                   <div className="bg-primary-light/10 dark:bg-primary-dark/20 text-primary-light dark:text-primary-dark font-bold text-xl px-6 py-3 rounded-lg mb-4 mt-8 first:mt-0">
-                    {q.subject || 'সাধারণ'}
+                    {q.subject || (language === 'bn' ? 'সাধারণ' : 'General')}
                   </div>
                 )}
                 <motion.div 
@@ -1014,7 +1057,7 @@ export default function TakeExam() {
                   className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800"
                 >
                   <h3 className="text-lg font-medium mb-4 flex gap-3">
-                    <span className="font-bold text-gray-400">{activeIdx + 1}.</span>
+                    <span className="font-bold text-gray-400">{toLangNumber(activeIdx + 1)}.</span>
                     <span className="flex-1"><MathText text={q.text} /></span>
                   </h3>
                   <div className="flex flex-col gap-3 pl-7">
@@ -1063,7 +1106,7 @@ export default function TakeExam() {
                 </div>
               )}
               <h3 className="text-xl font-medium mb-6 flex gap-3">
-                <span className="font-bold text-gray-400">{currentQuestionIndex + 1}.</span>
+                <span className="font-bold text-gray-400">{toLangNumber(currentQuestionIndex + 1)}.</span>
                 <span className="flex-1"><MathText text={activeQuestions[currentQuestionIndex].text} /></span>
               </h3>
               <div className="flex flex-col gap-4 pl-7">
@@ -1102,21 +1145,21 @@ export default function TakeExam() {
                 disabled={currentQuestionIndex === 0}
                 className="px-6 py-2 border border-gray-300 rounded-lg disabled:opacity-30"
               >
-                আগেরটি
+                {language === 'bn' ? 'আগেরটি' : 'Previous'}
               </button>
               {currentQuestionIndex < activeQuestions.length - 1 ? (
                 <button 
                   onClick={() => setCurrentQuestionIndex(prev => Math.min(activeQuestions.length - 1, prev + 1))}
                   className="px-6 py-2 bg-primary-light text-white rounded-lg"
                 >
-                  পরেরটি
+                  {language === 'bn' ? 'পরেরটি' : 'Next'}
                 </button>
               ) : (
                 <button 
                   onClick={confirmSubmit}
                   className="px-6 py-2 bg-green-600 text-white rounded-lg"
                 >
-                  পরীক্ষা জমা দিন
+                  {t('submitExamBtn')}
                 </button>
               )}
             </div>

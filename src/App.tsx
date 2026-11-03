@@ -71,16 +71,20 @@ function AnimatedRoutes() {
   );
 }
 
+import { LanguageProvider } from './context/LanguageContext';
+
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <ScrollToTop />
-        <MainLayout>
-          <AnimatedRoutes />
-        </MainLayout>
-      </Router>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <Router>
+          <ScrollToTop />
+          <MainLayout>
+            <AnimatedRoutes />
+          </MainLayout>
+        </Router>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

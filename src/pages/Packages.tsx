@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import PaymentModal from '../components/PaymentModal';
 import { formatImageUrl } from '../lib/imageUtils';
 import { isPackageUnlocked } from '../lib/accessControl';
+import { useLanguage } from '../context/LanguageContext';
 
 interface CoursePackage {
   id: string;
@@ -22,6 +23,7 @@ interface CoursePackage {
 
 export default function Packages() {
   const { userData, role } = useAuth();
+  const { language, toLangNumber, t } = useLanguage();
   const isTeacher = role === 'owner' || role === 'assistant';
   const [packages, setPackages] = useState<CoursePackage[]>([]);
   const [examsMap, setExamsMap] = useState<Record<string, string>>({});
@@ -61,10 +63,6 @@ export default function Packages() {
     fetchPackagesAndItems();
   }, []);
 
-  const toBengaliNumber = (num: number | string) => {
-    const bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-    return num.toString().replace(/\d/g, (d) => bengaliDigits[parseInt(d)]);
-  };
 
   if (loading) {
     return (
@@ -98,25 +96,27 @@ export default function Packages() {
       )}
 
       <div className="text-center mb-12">
-        <h1 className="text-3xl md:text-4xl font-heading font-bold text-gray-900 dark:text-white">স্পেশাল প্যাকেজ সমূহ</h1>
+        <h1 className="text-3xl md:text-4xl font-heading font-bold text-gray-900 dark:text-white">{t('specialPackages')}</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-4 max-w-2xl mx-auto">
-          আপনার প্রস্তুতিকে আরও শাণিত করতে আমাদের স্পেশাল প্যাকেজগুলো থেকে আপনার পছন্দেরটি বেছে নিন। প্রতিটি প্যাকেজ অভিজ্ঞ শিক্ষকদের দ্বারা সাজানো।
+          {t('packagesSubtitle')}
         </p>
       </div>
 
       {packages.length === 0 ? (
         <div className="text-center p-12 bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 max-w-2xl mx-auto">
           <Package size={64} className="mx-auto text-gray-300 dark:text-gray-700 mb-6" />
-          <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-2">নতুন প্যাকেজ আসছে!</h2>
+          <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-2">{t('newPackagesComing')}</h2>
           <p className="text-gray-500 dark:text-gray-400">
-            বর্তমানে কোনো প্যাকেজ এভেইলেবল নেই। খুব শীঘ্রই নতুন প্যাকেজ যোগ করা হবে, আমাদের সাথেই থাকুন।
+            {language === 'bn' 
+              ? 'বর্তমানে কোনো প্যাকেজ এভেইলেবল নেই। খুব শীঘ্রই নতুন প্যাকেজ যোগ করা হবে, আমাদের সাথেই থাকুন।' 
+              : 'No packages available at the moment. New packages will be added soon, stay tuned!'}
           </p>
           {isTeacher && (
             <Link 
               to="/manage-packages"
               className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-primary-light text-white rounded-xl font-bold hover:bg-primary-dark transition-colors shadow-md"
             >
-              <Plus size={18} /> আপনার প্রথম প্যাকেজটি যোগ করুন
+              <Plus size={18} /> {language === 'bn' ? 'আপনার প্রথম প্যাকেজটি যোগ করুন' : 'Add Your First Package'}
             </Link>
           )}
         </div>
@@ -142,14 +142,14 @@ export default function Packages() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
                   <div className="absolute top-3 left-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-primary-light dark:text-primary-dark shadow-sm flex items-center gap-1.5">
-                    <Sparkles size={13} className="text-amber-500" /> স্পেশাল কোর্স
+                    <Sparkles size={13} className="text-amber-500" /> {language === 'bn' ? 'স্পেশাল কোর্স' : 'Special Course'}
                   </div>
                 </div>
               ) : (
-                /* Elegant default header banner if no image is uploaded yet */
+                /* Default header banner if no image */
                 <div className="relative w-full h-36 bg-gradient-to-br from-primary-light via-primary-light/95 to-primary-dark p-6 flex flex-col justify-between overflow-hidden shrink-0">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-semibold self-start">
-                    <Sparkles size={13} className="text-amber-300" /> স্পেশাল কোর্স প্যাকেজ
+                    <Sparkles size={13} className="text-amber-300" /> {language === 'bn' ? 'স্পেশাল কোর্স প্যাকেজ' : 'Special Course Package'}
                   </span>
                   <Package size={64} className="text-white/10 absolute -right-2 -bottom-2 transform rotate-12" />
                 </div>
@@ -163,9 +163,9 @@ export default function Packages() {
                   )}
                   <div className="mb-6 flex items-baseline gap-2">
                     <span className="text-4xl font-black text-primary-light dark:text-primary-dark">
-                      ৳{toBengaliNumber(pkg.price)}
+                      {language === 'bn' ? `৳${toLangNumber(pkg.price)}` : `BDT ${toLangNumber(pkg.price)}`}
                     </span>
-                    <span className="text-xs text-gray-400 font-medium">/ এককালীন</span>
+                    <span className="text-xs text-gray-400 font-medium">{language === 'bn' ? '/ এককালীন' : '/ one-time'}</span>
                   </div>
                   <ul className="space-y-3.5 mb-6">
                     {pkg.features?.map((feature, idx) => (
@@ -180,14 +180,14 @@ export default function Packages() {
                   {((pkg.includedExams && pkg.includedExams.length > 0) || (pkg.includedResources && pkg.includedResources.length > 0)) && (
                     <div className="mb-6 pt-4 border-t border-dashed border-gray-200 dark:border-gray-800 space-y-3">
                       <span className="text-xs font-bold text-gray-500 dark:text-gray-400 block uppercase tracking-wider">
-                        প্যাকেজে অন্তর্ভুক্ত কনটেন্ট (আনলক হবে):
+                        {t('includedContentTitle')}
                       </span>
 
                       {/* Included Exams List */}
                       {pkg.includedExams && pkg.includedExams.length > 0 && (
                         <div>
                           <div className="flex items-center gap-1.5 text-xs font-bold text-primary-light dark:text-primary-dark mb-1.5">
-                            <BookOpen size={14} /> {toBengaliNumber(pkg.includedExams.length)}টি পরীক্ষা:
+                            <BookOpen size={14} /> {toLangNumber(pkg.includedExams.length)}{t('examsCountText')}
                           </div>
                           <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
                             {pkg.includedExams.map(exId => (
@@ -195,7 +195,7 @@ export default function Packages() {
                                 key={exId}
                                 className="inline-flex items-center text-xs px-2.5 py-1 rounded-lg bg-primary-light/5 dark:bg-primary-dark/15 text-primary-light dark:text-primary-dark border border-primary-light/20 dark:border-primary-dark/30 font-medium"
                               >
-                                {examsMap[exId] || 'পরীক্ষা'}
+                                {examsMap[exId] || (language === 'bn' ? 'পরীক্ষা' : 'Exam')}
                               </span>
                             ))}
                           </div>
@@ -206,7 +206,7 @@ export default function Packages() {
                       {pkg.includedResources && pkg.includedResources.length > 0 && (
                         <div>
                           <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 mb-1.5">
-                            <FileText size={14} /> {toBengaliNumber(pkg.includedResources.length)}টি রিসোর্স ও শিট:
+                            <FileText size={14} /> {toLangNumber(pkg.includedResources.length)}{t('resourcesCountText')}
                           </div>
                           <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
                             {pkg.includedResources.map(resId => (
@@ -214,7 +214,7 @@ export default function Packages() {
                                 key={resId}
                                 className="inline-flex items-center text-xs px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 font-medium"
                               >
-                                {resourcesMap[resId] || 'রিসোর্স'}
+                                {resourcesMap[resId] || (language === 'bn' ? 'রিসোর্স' : 'Resource')}
                               </span>
                             ))}
                           </div>
@@ -230,14 +230,14 @@ export default function Packages() {
                       disabled
                       className="w-full py-3 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-xl font-bold flex items-center justify-center gap-2 cursor-default text-sm"
                     >
-                      <CheckCircle2 size={18} /> প্যাকেজটি আপনার কেনা আছে
+                      <CheckCircle2 size={18} /> {t('packagePurchasedBtn')}
                     </button>
                   ) : (
                     <button 
                       onClick={() => setShowPaymentModal(true)}
                       className="w-full py-3 bg-primary-light hover:bg-primary-dark text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg text-sm"
                     >
-                      <Lock size={18} /> আনলক করুন
+                      <Lock size={18} /> {t('unlockPackageBtn')}
                     </button>
                   )}
                 </div>

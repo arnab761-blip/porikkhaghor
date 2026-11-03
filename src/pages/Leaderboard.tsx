@@ -13,6 +13,7 @@ import {
   FileText,
   Trophy
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface ResultEntry {
   id: string;
@@ -32,6 +33,7 @@ interface ResultEntry {
 export default function Leaderboard() {
   const { examId } = useParams();
   const { user, role } = useAuth();
+  const { t, language, toLangNumber, formatDate } = useLanguage();
   const [examTitle, setExamTitle] = useState('');
   const [results, setResults] = useState<ResultEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,12 +121,6 @@ export default function Leaderboard() {
     fetchLeaderboard();
   }, [examId]);
 
-  const toBengaliNumber = (num: number | string) => {
-    if (num === null || num === undefined || Number.isNaN(Number(num))) return '০';
-    const bengaliDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-    return num.toString().replace(/\d/g, (d) => bengaliDigits[parseInt(d)]);
-  };
-
   // Stats calculation
   const totalStudents = results.length;
   const highestScore = totalStudents > 0 ? results[0].stats?.totalScore : 0;
@@ -150,7 +146,7 @@ export default function Leaderboard() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <div className="w-12 h-12 border-4 border-primary-light border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">মেধাতালিকা তৈরি হচ্ছে...</p>
+        <p className="text-gray-500 font-medium">{t('loading')}</p>
       </div>
     );
   }
@@ -167,7 +163,7 @@ export default function Leaderboard() {
           to="/exams" 
           className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary-light dark:hover:text-primary-dark transition-colors"
         >
-          <ArrowLeft size={16} /> সকল পরীক্ষায় ফিরে যান
+          <ArrowLeft size={16} /> {language === 'bn' ? 'সকল পরীক্ষায় ফিরে যান' : 'Back to All Exams'}
         </Link>
       </div>
 
@@ -175,13 +171,15 @@ export default function Leaderboard() {
       <div className="bg-gradient-to-r from-primary-light to-primary-dark text-white rounded-3xl p-6 sm:p-8 shadow-sm mb-8 relative overflow-hidden">
         <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold mb-3">
-            <Trophy size={14} className="text-amber-300" /> অফিসিয়াল মেধাতালিকা
+            <Trophy size={14} className="text-amber-300" /> {language === 'bn' ? 'অফিসিয়াল মেধাতালিকা' : 'Official Merit List'}
           </div>
           <h1 className="text-2xl sm:text-3xl font-heading font-bold mb-2">
-            {examTitle || 'পরীক্ষার ফলাফল ও মেধা তালিকা'}
+            {examTitle || t('leaderboardHeading')}
           </h1>
           <p className="text-white/80 text-sm">
-            প্রতিটি শিক্ষার্থীর শুধুমাত্র প্রথম পরীক্ষার ফলাফল (First Attempt) নিয়ে তৈরি অফিসিয়াল মেধা তালিকা। পুনরায় দেওয়া পরীক্ষা (Retake) মেধা তালিকায় যুক্ত হবে না।
+            {language === 'bn' 
+              ? 'প্রতিটি শিক্ষার্থীর শুধুমাত্র প্রথম পরীক্ষার ফলাফল (First Attempt) নিয়ে তৈরি অফিসিয়াল মেধা তালিকা। পুনরায় দেওয়া পরীক্ষা (Retake) মেধা তালিকায় যুক্ত হবে না।' 
+              : 'Official merit list based on each student\'s first attempt. Retakes are not counted towards the official rank.'}
           </p>
         </div>
       </div>
@@ -193,9 +191,9 @@ export default function Leaderboard() {
             <Users size={24} />
           </div>
           <div>
-            <span className="text-xs text-gray-400 font-medium">মোট পরীক্ষার্থী</span>
+            <span className="text-xs text-gray-400 font-medium">{language === 'bn' ? 'মোট পরীক্ষার্থী' : 'Total Examinees'}</span>
             <div className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5">
-              {toBengaliNumber(totalStudents)} জন
+              {toLangNumber(totalStudents)} {language === 'bn' ? 'জন' : ''}
             </div>
           </div>
         </div>
@@ -205,9 +203,9 @@ export default function Leaderboard() {
             <Trophy size={24} />
           </div>
           <div>
-            <span className="text-xs text-gray-400 font-medium">সর্বোচ্চ নম্বর</span>
+            <span className="text-xs text-gray-400 font-medium">{language === 'bn' ? 'সর্বোচ্চ নম্বর' : 'Highest Score'}</span>
             <div className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5">
-              {toBengaliNumber(highestScore)}
+              {toLangNumber(highestScore)}
             </div>
           </div>
         </div>
@@ -217,9 +215,9 @@ export default function Leaderboard() {
             <TrendingUp size={24} />
           </div>
           <div>
-            <span className="text-xs text-gray-400 font-medium">গড় নম্বর (Average)</span>
+            <span className="text-xs text-gray-400 font-medium">{language === 'bn' ? 'গড় নম্বর (Average)' : 'Average Score'}</span>
             <div className="text-2xl font-bold text-gray-900 dark:text-white mt-0.5">
-              {toBengaliNumber(averageScore)}
+              {toLangNumber(averageScore)}
             </div>
           </div>
         </div>
@@ -230,14 +228,16 @@ export default function Leaderboard() {
         <div className="mb-8 p-5 bg-amber-500/10 dark:bg-amber-500/20 border-2 border-amber-500/40 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center font-bold text-xl shadow-sm">
-              #{toBengaliNumber(myRank)}
+              #{toLangNumber(myRank)}
             </div>
             <div>
               <h3 className="font-bold text-gray-900 dark:text-white text-base sm:text-lg">
-                আপনার মেধা অবস্থান: {toBengaliNumber(myRank)} নম্বর স্থান
+                {language === 'bn' ? `আপনার মেধা অবস্থান: ${toLangNumber(myRank)} নম্বর স্থান` : `Your Merit Position: Rank #${toLangNumber(myRank)}`}
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                মোট {toBengaliNumber(totalStudents)} জন পরীক্ষার্থীর মধ্যে আপনার প্রাপ্ত স্কোর: {toBengaliNumber(results[myRankIndex].stats?.totalScore)}
+                {language === 'bn' 
+                  ? `মোট ${toLangNumber(totalStudents)} জন পরীক্ষার্থীর মধ্যে আপনার প্রাপ্ত স্কোর: ${toLangNumber(results[myRankIndex].stats?.totalScore)}` 
+                  : `Score: ${toLangNumber(results[myRankIndex].stats?.totalScore)} among ${toLangNumber(totalStudents)} students`}
               </p>
             </div>
           </div>
@@ -246,53 +246,53 @@ export default function Leaderboard() {
             to={`/result/${results[myRankIndex].id}`}
             className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition-all shadow-sm shrink-0 flex items-center gap-1.5"
           >
-            <FileText size={16} /> নিজের খাতা ও ব্যাখ্যা দেখুন
+            <FileText size={16} /> {language === 'bn' ? 'নিজের খাতা ও ব্যাখ্যা দেখুন' : 'View Script & Solutions'}
           </Link>
         </div>
       )}
 
-      {/* Top 3 Podium (Screenshots / Premium Look) */}
+      {/* Top 3 Podium */}
       {results.length >= 3 && !searchQuery && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {/* 2nd Place */}
           <div className="order-2 sm:order-1 bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 text-center shadow-sm relative pt-8">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-slate-300 text-slate-800 font-bold flex items-center justify-center text-sm shadow">
-              ২
+              {toLangNumber(2)}
             </div>
             <h4 className="font-bold text-gray-900 dark:text-white text-base line-clamp-1">{results[1].userName}</h4>
             <div className="text-2xl font-bold text-slate-600 dark:text-slate-300 my-1">
-              {toBengaliNumber(results[1].stats?.totalScore)} <span className="text-xs font-normal text-gray-400">/ {toBengaliNumber(results[1].stats?.outOf)}</span>
+              {toLangNumber(results[1].stats?.totalScore)} <span className="text-xs font-normal text-gray-400">/ {toLangNumber(results[1].stats?.outOf)}</span>
             </div>
             <div className="text-xs text-gray-400">
-              সঠিক: {toBengaliNumber(results[1].stats?.correct)} | ভুল: {toBengaliNumber(results[1].stats?.wrong)}
+              {language === 'bn' ? 'সঠিক' : 'Correct'}: {toLangNumber(results[1].stats?.correct)} | {language === 'bn' ? 'ভুল' : 'Wrong'}: {toLangNumber(results[1].stats?.wrong)}
             </div>
           </div>
 
           {/* 1st Place (Champion) */}
           <div className="order-1 sm:order-2 bg-gradient-to-b from-amber-50 to-white dark:from-amber-950/20 dark:to-gray-900 p-6 rounded-3xl border-2 border-amber-400 text-center shadow-md relative pt-9 transform sm:-translate-y-2">
             <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-amber-400 text-amber-950 font-bold flex items-center justify-center text-base shadow-md">
-              👑 ১
+              👑 {toLangNumber(1)}
             </div>
             <h4 className="font-bold text-gray-900 dark:text-white text-lg line-clamp-1">{results[0].userName}</h4>
             <div className="text-3xl font-extrabold text-amber-500 my-1">
-              {toBengaliNumber(results[0].stats?.totalScore)} <span className="text-xs font-normal text-gray-400">/ {toBengaliNumber(results[0].stats?.outOf)}</span>
+              {toLangNumber(results[0].stats?.totalScore)} <span className="text-xs font-normal text-gray-400">/ {toLangNumber(results[0].stats?.outOf)}</span>
             </div>
             <div className="text-xs text-amber-700 dark:text-amber-300 font-medium">
-              সঠিক: {toBengaliNumber(results[0].stats?.correct)} | ভুল: {toBengaliNumber(results[0].stats?.wrong)}
+              {language === 'bn' ? 'সঠিক' : 'Correct'}: {toLangNumber(results[0].stats?.correct)} | {language === 'bn' ? 'ভুল' : 'Wrong'}: {toLangNumber(results[0].stats?.wrong)}
             </div>
           </div>
 
           {/* 3rd Place */}
           <div className="order-3 bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-100 dark:border-gray-800 text-center shadow-sm relative pt-8">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-amber-700/60 text-white font-bold flex items-center justify-center text-sm shadow">
-              ৩
+              {toLangNumber(3)}
             </div>
             <h4 className="font-bold text-gray-900 dark:text-white text-base line-clamp-1">{results[2].userName}</h4>
             <div className="text-2xl font-bold text-amber-800 dark:text-amber-400 my-1">
-              {toBengaliNumber(results[2].stats?.totalScore)} <span className="text-xs font-normal text-gray-400">/ {toBengaliNumber(results[2].stats?.outOf)}</span>
+              {toLangNumber(results[2].stats?.totalScore)} <span className="text-xs font-normal text-gray-400">/ {toLangNumber(results[2].stats?.outOf)}</span>
             </div>
             <div className="text-xs text-gray-400">
-              সঠিক: {toBengaliNumber(results[2].stats?.correct)} | ভুল: {toBengaliNumber(results[2].stats?.wrong)}
+              {language === 'bn' ? 'সঠিক' : 'Correct'}: {toLangNumber(results[2].stats?.correct)} | {language === 'bn' ? 'ভুল' : 'Wrong'}: {toLangNumber(results[2].stats?.wrong)}
             </div>
           </div>
         </div>
@@ -302,7 +302,7 @@ export default function Leaderboard() {
       <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Award className="text-primary-light dark:text-primary-dark" size={22} /> মেধা তালিকা ({toBengaliNumber(filteredResults.length)} জন)
+            <Award className="text-primary-light dark:text-primary-dark" size={22} /> {t('leaderboardHeading')} ({toLangNumber(filteredResults.length)} {language === 'bn' ? 'জন' : ''})
           </h3>
 
           <div className="relative w-full sm:w-72">
@@ -311,7 +311,7 @@ export default function Leaderboard() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="শিক্ষার্থীর নাম বা ইমেইল খুঁজুন..."
+              placeholder={t('searchStudentPlaceholder')}
               className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-light dark:text-white"
             />
           </div>
@@ -319,19 +319,19 @@ export default function Leaderboard() {
 
         {filteredResults.length === 0 ? (
           <div className="text-center py-12 text-gray-500 font-medium">
-            এখনো কেউ এই পরীক্ষায় অংশগ্রহণ করেনি অথবা আপনার অনুসন্ধানের সাথে মিল নেই।
+            {t('noSubmissionsYet')}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-800 text-gray-400 font-medium text-xs">
-                  <th className="pb-3 text-center w-16">র‌্যাঙ্ক</th>
-                  <th className="pb-3">শিক্ষার্থীর নাম</th>
-                  <th className="pb-3 text-center">প্রাপ্ত নম্বর</th>
-                  <th className="pb-3 text-center hidden md:table-cell">সঠিক / ভুল</th>
-                  <th className="pb-3 text-right hidden sm:table-cell">জমার সময়</th>
-                  {isTeacher && <th className="pb-3 text-right">খাতা</th>}
+                  <th className="pb-3 text-center w-16">{t('rankHeader')}</th>
+                  <th className="pb-3">{t('studentHeader')}</th>
+                  <th className="pb-3 text-center">{t('scoreHeader')}</th>
+                  <th className="pb-3 text-center hidden md:table-cell">{t('correctWrongHeader')}</th>
+                  <th className="pb-3 text-right hidden sm:table-cell">{t('submittedAtHeader')}</th>
+                  {isTeacher && <th className="pb-3 text-right">{language === 'bn' ? 'খাতা' : 'Script'}</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -339,13 +339,13 @@ export default function Leaderboard() {
                   const rank = index + 1;
                   const isMe = user && item.userId === user.uid;
                   const formattedTime = item.submittedAt?.toDate 
-                    ? item.submittedAt.toDate().toLocaleString('bn-BD', {
+                    ? formatDate(item.submittedAt.toDate(), {
                         day: 'numeric',
                         month: 'short',
                         hour: '2-digit',
                         minute: '2-digit'
                       })
-                    : 'এখনই';
+                    : (language === 'bn' ? 'এখনই' : 'Just now');
 
                   return (
                     <tr 
@@ -360,19 +360,19 @@ export default function Leaderboard() {
                       <td className="py-4 text-center">
                         {rank === 1 ? (
                           <span className="inline-flex items-center justify-center w-7 h-7 bg-amber-400 text-amber-950 rounded-full font-bold text-xs shadow-sm">
-                            ১
+                            {toLangNumber(1)}
                           </span>
                         ) : rank === 2 ? (
                           <span className="inline-flex items-center justify-center w-7 h-7 bg-slate-300 text-slate-800 rounded-full font-bold text-xs shadow-sm">
-                            ২
+                            {toLangNumber(2)}
                           </span>
                         ) : rank === 3 ? (
                           <span className="inline-flex items-center justify-center w-7 h-7 bg-amber-700/60 text-white rounded-full font-bold text-xs shadow-sm">
-                            ৩
+                            {toLangNumber(3)}
                           </span>
                         ) : (
                           <span className="text-gray-500 font-medium">
-                            {toBengaliNumber(rank)}
+                            {toLangNumber(rank)}
                           </span>
                         )}
                       </td>
@@ -385,7 +385,7 @@ export default function Leaderboard() {
                           </span>
                           {isMe && (
                             <span className="text-[10px] bg-primary-light text-white font-bold px-2 py-0.5 rounded-full">
-                              আপনি
+                              {language === 'bn' ? 'আপনি' : 'You'}
                             </span>
                           )}
                         </div>
@@ -396,15 +396,15 @@ export default function Leaderboard() {
 
                       {/* Score */}
                       <td className="py-4 text-center font-bold text-primary-light dark:text-primary-dark">
-                        {toBengaliNumber(item.stats?.totalScore)}
-                        <span className="text-xs text-gray-400 font-normal"> / {toBengaliNumber(item.stats?.outOf)}</span>
+                        {toLangNumber(item.stats?.totalScore)}
+                        <span className="text-xs text-gray-400 font-normal"> / {toLangNumber(item.stats?.outOf)}</span>
                       </td>
 
                       {/* Correct / Wrong */}
                       <td className="py-4 text-center hidden md:table-cell text-xs whitespace-nowrap leading-normal">
-                        <span className="text-green-600 font-semibold inline-block">{toBengaliNumber(item.stats?.correct)} সঠিক</span>
+                        <span className="text-green-600 font-semibold inline-block">{toLangNumber(item.stats?.correct)} {language === 'bn' ? 'সঠিক' : 'Correct'}</span>
                         <span className="text-gray-300 dark:text-gray-700 mx-1.5">|</span>
-                        <span className="text-red-500 font-semibold inline-block">{toBengaliNumber(item.stats?.wrong)} ভুল</span>
+                        <span className="text-red-500 font-semibold inline-block">{toLangNumber(item.stats?.wrong)} {language === 'bn' ? 'ভুল' : 'Wrong'}</span>
                       </td>
 
                       {/* Submitted At */}
@@ -419,7 +419,7 @@ export default function Leaderboard() {
                             to={`/result/${item.id}`}
                             className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg text-primary-light dark:text-primary-dark font-medium transition-colors"
                           >
-                            <FileText size={12} /> দেখুন
+                            <FileText size={12} /> {language === 'bn' ? 'দেখুন' : 'View'}
                           </Link>
                         </td>
                       )}
