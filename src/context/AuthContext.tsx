@@ -4,7 +4,11 @@ import {
   onAuthStateChanged, 
   signInWithPopup, 
   signInAnonymously, 
-  signOut 
+  signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile
 } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -17,6 +21,9 @@ interface AuthContextType {
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signInAsGuest: () => Promise<void>;
+  signInWithEmail: (email: string, pass: string) => Promise<void>;
+  signUpWithEmail: (email: string, pass: string, name: string, phone: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -57,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const newUserData = {
             name: currentUser.displayName || (isGuest ? 'গেস্ট ইউজার' : 'নতুন ইউজার'),
             email: currentUser.email || null,
+            phone: (currentUser as any).phoneNumber || null,
             role: newUserRole,
             isAnonymous: isGuest,
             createdAt: serverTimestamp(),
@@ -65,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             unlockedResources: [],
             hasPaidAccess: false
           };
-          await setDoc(userRef, newUserData);
+          await setDoc(userRef, newUserData, { merge: true });
           setRole(newUserRole);
           setUserData(newUserData);
         }
@@ -97,6 +105,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInWithEmail = async (email: string, pass: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), pass);
+    } catch (error) {
+      console.error("Email Sign-In Error:", error);
+      throw error;
+    }
+  };
+
+  const signUpWithEmail = async (email: string, pass: string, name: string, phone: string) => {
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email.trim(), pass);
+      if (name.trim()) {
+        await updateProfile(cred.user, { displayName: name.trim() });
+      }
+      const userRef = doc(db, 'users', cred.user.uid);
+      const newUserRole = email.trim() === 'geminioperator5@gmail.com' ? 'owner' : 'student';
+      const newUserData = {
+        name: name.trim() || 'নতুন ইউজার',
+        email: email.trim(),
+        phone: phone.trim() || null,
+        role: newUserRole,
+        isAnonymous: false,
+        createdAt: serverTimestamp(),
+        unlockedExams: [],
+        unlockedPackages: [],
+        unlockedResources: [],
+        hasPaidAccess: false
+      };
+      await setDoc(userRef, newUserData, { merge: true });
+      setRole(newUserRole);
+      setUserData(newUserData);
+    } catch (error) {
+      console.error("Email Sign-Up Error:", error);
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+    } catch (error) {
+      console.error("Password Reset Error:", error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       await signOut(auth);
@@ -106,7 +161,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, role, userData, loading, signInWithGoogle, signInAsGuest, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      role, 
+      userData, 
+      loading, 
+      signInWithGoogle, 
+      signInAsGuest, 
+      signInWithEmail,
+      signUpWithEmail,
+      resetPassword,
+      logout 
+    }}>
       {!loading && children}
     </AuthContext.Provider>
   );

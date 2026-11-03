@@ -37,6 +37,7 @@ import MyExams from './pages/MyExams';
 import Leaderboard from './pages/Leaderboard';
 import MyDoubts from './pages/MyDoubts';
 import TeacherDoubts from './pages/TeacherDoubts';
+import UserGuide from './pages/UserGuide';
 
 // Wrapper for AnimatePresence to work with routes
 function AnimatedRoutes() {
@@ -64,6 +65,7 @@ function AnimatedRoutes() {
         <Route path="/performance" element={<Performance />} />
         <Route path="/courses" element={<Packages />} />
         <Route path="/my-exams" element={<MyExams />} />
+        <Route path="/user-guide" element={<UserGuide />} />
       </Routes>
     </AnimatePresence>
   );

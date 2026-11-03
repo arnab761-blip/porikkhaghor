@@ -290,57 +290,59 @@ export default function ExamList() {
         </div>
 
         {/* Search Bar & View Mode Toggle */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-72">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 sm:w-80 md:w-80">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="যেকোনো পরীক্ষা বা বিষয় খুঁজুন..."
-              className="w-full pl-10 pr-9 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-light/40 dark:text-white"
+              className="w-full pl-10 pr-9 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-light/40 dark:text-white transition-all shadow-sm"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
               >
                 <X size={16} />
               </button>
             )}
           </div>
 
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl shrink-0">
+          <div className="flex items-center gap-2 justify-between sm:justify-start">
+            <div className="flex items-center bg-gray-100 dark:bg-gray-800 p-1 rounded-xl shrink-0 flex-1 sm:flex-initial">
+              <button
+                onClick={() => { setViewMode('folder'); setSearchQuery(''); }}
+                className={`flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-center ${
+                  viewMode === 'folder' && !searchQuery
+                    ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                ফোল্ডার ভিউ
+              </button>
+              <button
+                onClick={() => setViewMode('all')}
+                className={`flex-1 sm:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all text-center ${
+                  viewMode === 'all' || searchQuery
+                    ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                সকল পরীক্ষা
+              </button>
+            </div>
+
             <button
-              onClick={() => { setViewMode('folder'); setSearchQuery(''); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'folder' && !searchQuery
-                  ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400'
-              }`}
+              onClick={() => fetchExams(true)}
+              disabled={isRefreshing}
+              title="নতুন কোনো পরীক্ষা যোগ হলে রিফ্রেশ করুন"
+              className="p-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-500 hover:text-primary-light dark:hover:text-primary-dark transition-all hover:bg-gray-50 dark:hover:bg-gray-800 shrink-0 flex items-center justify-center disabled:opacity-50"
             >
-              ফোল্ডার ভিউ
-            </button>
-            <button
-              onClick={() => setViewMode('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'all' || searchQuery
-                  ? 'bg-white dark:bg-gray-900 text-primary-light dark:text-primary-dark shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400'
-              }`}
-            >
-              সকল পরীক্ষা
+              <RotateCcw size={16} className={isRefreshing ? 'animate-spin text-primary-light dark:text-primary-dark' : ''} />
             </button>
           </div>
-
-          <button
-            onClick={() => fetchExams(true)}
-            disabled={isRefreshing}
-            title="নতুন কোনো পরীক্ষা যোগ হলে রিফ্রেশ করুন"
-            className="p-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-500 hover:text-primary-light dark:hover:text-primary-dark transition-all hover:bg-gray-50 dark:hover:bg-gray-800 shrink-0 flex items-center justify-center disabled:opacity-50"
-          >
-            <RotateCcw size={16} className={isRefreshing ? 'animate-spin text-primary-light dark:text-primary-dark' : ''} />
-          </button>
         </div>
       </div>
 

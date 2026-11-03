@@ -52,10 +52,18 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex items-center gap-5">
             <Link to="/exams" className="hover:text-accent-light dark:hover:text-accent-dark transition-colors">পরীক্ষা সমূহ</Link>
             <Link to="/courses" className="hover:text-accent-light dark:hover:text-accent-dark transition-colors">প্যাকেজ</Link>
             <Link to="/resources" className="hover:text-accent-light dark:hover:text-accent-dark transition-colors">রিসোর্স</Link>
+            
+            <Link 
+              to="/user-guide" 
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary-light/10 dark:bg-primary-dark/20 text-primary-light dark:text-primary-dark hover:bg-primary-light hover:text-white dark:hover:bg-primary-dark dark:hover:text-white transition-all text-xs font-bold shadow-2xs"
+              title="ওয়েবসাইট ব্যবহারের সম্পূর্ণ ইউজার গাইড"
+            >
+              <BookOpen size={15} /> ইউজার গাইড
+            </Link>
             
             <button onClick={toggleDarkMode} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -81,7 +89,10 @@ export default function MainLayout({ children }: { children: ReactNode }) {
           </nav>
 
           {/* Mobile Menu Button & Notification */}
-          <div className="flex md:hidden items-center gap-2 sm:gap-4">
+          <div className="flex md:hidden items-center gap-2 sm:gap-3">
+            <Link to="/user-guide" className="p-2 text-primary-light dark:text-primary-dark" title="ইউজার গাইড">
+              <BookOpen size={20} />
+            </Link>
             <button onClick={toggleDarkMode} className="p-2">
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
@@ -102,7 +113,10 @@ export default function MainLayout({ children }: { children: ReactNode }) {
             exit={{ opacity: 0, y: -20 }}
             className="fixed inset-x-0 top-16 bg-background border-b border-gray-200 dark:border-gray-800 z-40 md:hidden shadow-lg"
           >
-            <nav className="flex flex-col p-4 gap-4">
+            <nav className="flex flex-col p-4 gap-3">
+              <Link to="/user-guide" onClick={() => setIsMobileMenuOpen(false)} className="text-base p-2.5 bg-primary-light/10 dark:bg-primary-dark/20 text-primary-light dark:text-primary-dark font-bold rounded-xl flex items-center gap-2">
+                <BookOpen size={18} /> ইউজার গাইড ও ফিচার নির্দেশিকা
+              </Link>
               <Link to="/exams" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">পরীক্ষা সমূহ</Link>
               <Link to="/courses" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">প্যাকেজ</Link>
               <Link to="/resources" onClick={() => setIsMobileMenuOpen(false)} className="text-lg p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">রিসোর্স</Link>
